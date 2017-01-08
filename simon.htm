@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/skeleton.css">
+    <link rel="stylesheet" href="css/tictactoe.css" />
+    
+    <link href="https://fonts.googleapis.com/css?family=Rock+Salt" rel="stylesheet">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src="http://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+        integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+        crossorigin="anonymous"></script>
+    <script src="js/gameGrid.js"></script>
+    <script src="js/tictactoe.js"></script>
+    <script src="js/utility.js"></script>
+    <script src="js/jcanvas.min.js"></script>
+    <script src="js/jquery.shiftLetters.js"></script>
+
+    
+
+    <title>Tic Tac Toe</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+    <div id="pageContent" class="container">
+        <div class="row">
+            <div class="twelve columns">
+                <h5>Tic Tac Toe!</h5>
+                <div id="tictactoe">
+                    <div class="signature">
+                        by Curt Hill
+                    </div>
+                    <div id="game"></div>
+                    <canvas width="225" height="225"></canvas>
+                    <div id="message">
+                        Select <span id="X">X</span> or <span id="O">O</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

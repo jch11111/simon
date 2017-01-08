@@ -1,0 +1,69 @@
+a:hover, a:focus, a:active, a:visited, a:link {
+    text-decoration: none !important;
+}
+
+body {
+    font-family: 'Rock Salt', cursive;
+}
+
+h5 {
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 0px;
+}
+
+html, body { 
+  margin:0; 
+  padding:0; 
+  font-size: 16px;
+}
+
+#message {
+    color: #000;
+    margin-top: 20px;
+}
+
+.signature {
+    font-size: 14px;
+    color: #BBB;
+    margin-bottom: 40px;
+}
+
+#tictactoe, #game {
+    margin: 0 auto;
+    text-align: center;
+}
+
+.timerSettings {
+    height: 50px;
+}
+
+#X {
+    color: #F00;
+}
+
+#O {
+    color: #0F0;
+}
+
+#X, #O {
+    font-size: 30px;
+    font-weight: 600;
+    font-family: sans-serif;
+}
+
+#X, #O, canvas {
+    cursor: pointer;
+}
+
+@media screen and (max-width: 383px) {
+    h5 {
+        font-size: 32px;
+    }  
+}
+
+/*@media screen and (max-width: 400px) {
+    #message {
+        font-size: 14px;
+    }  
+}*/
