@@ -4,7 +4,7 @@
 <head>
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/skeleton.css">
-    <link rel="stylesheet" href="css/tictactoe.css" />
+    <link rel="stylesheet" href="css/simon.css" />
     
     <link href="https://fonts.googleapis.com/css?family=Rock+Salt" rel="stylesheet">
 
@@ -12,15 +12,11 @@
     <script src="http://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
         integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
         crossorigin="anonymous"></script>
-    <script src="js/gameGrid.js"></script>
-    <script src="js/tictactoe.js"></script>
+    <script src="js/simon.js"></script>
     <script src="js/utility.js"></script>
     <script src="js/jcanvas.min.js"></script>
-    <script src="js/jquery.shiftLetters.js"></script>
 
-    
-
-    <title>Tic Tac Toe</title>
+    <title>Simon</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
@@ -28,15 +24,14 @@
     <div id="pageContent" class="container">
         <div class="row">
             <div class="twelve columns">
-                <h5>Tic Tac Toe!</h5>
-                <div id="tictactoe">
+                <h5>Simon!</h5>
+                <div id="simon">
+                    <svg width="300" height="300">
+                        <circle id="c1" cx="50" cy="50" r="50" stroke="green" stroke-width="1" fill="yellow" />
+                        <circle id="c2" cx="50" cy="170" r="50" stroke="orange" stroke-width="1" fill="purple" />
+                    </svg>
                     <div class="signature">
                         by Curt Hill
-                    </div>
-                    <div id="game"></div>
-                    <canvas width="225" height="225"></canvas>
-                    <div id="message">
-                        Select <span id="X">X</span> or <span id="O">O</span>
                     </div>
                 </div>
             </div>
