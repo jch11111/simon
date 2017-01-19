@@ -7,11 +7,17 @@ var tictactoe = (function () {
     };
 
     function setEventHandlers() {
-        $('#c1').click(function () {
-            console.log('c1');
+        $('#path5283').click(function () {
+            console.log('path5283');
         })
-        $('#c2').click(function () {
-            console.log('c2');
+        $('#path5285').click(function () {
+            console.log('path5285');
+        })
+        $('#path5287').click(function () {
+            console.log('path5287');
+        })
+        $('#path5289').click(function () {
+            console.log('path5289');
         })
     }
 
