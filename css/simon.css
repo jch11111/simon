@@ -32,6 +32,7 @@ html, body {
 #simon {
     margin: 0 auto;
     text-align: center;
+    width: 70%;
 }
 
 .timerSettings {
@@ -62,6 +63,10 @@ html, body {
     }  
 }
 
+.color2 {
+    fill: #00f5ff;
+    stroke: #00f5ff;
+}
 /*@media screen and (max-width: 400px) {
     #message {
         font-size: 14px;
