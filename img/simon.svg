@@ -7,6 +7,7 @@
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="250"
@@ -16,8 +17,6 @@
    id="svg8"
    inkscape:version="0.92.0 r15299"
    sodipodi:docname="simon.svg">
-  <defs
-     id="defs2" />
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -25,9 +24,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.8284271"
-     inkscape:cx="105.0915"
-     inkscape:cy="125.68513"
+     inkscape:zoom="5.6568543"
+     inkscape:cx="144.60255"
+     inkscape:cy="55.464443"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -57,6 +56,8 @@
        spacingx="0.26458333"
        spacingy="0.26458333" />
   </sodipodi:namedview>
+  <defs
+     id="defs2" />
   <metadata
      id="metadata5">
     <rdf:RDF>
@@ -127,7 +128,7 @@
          id="tspan6126"
          x="104.51041"
          y="176.01074"
-         style="stroke-width:0.26458332"></tspan></text>
+         style="stroke-width:0.26458332" /></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;line-height:6.61458302px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
@@ -138,7 +139,7 @@
          id="tspan6130"
          x="103.1875"
          y="175.603"
-         style="stroke-width:0.26458332"></tspan></text>
+         style="stroke-width:0.26458332" /></text>
     <g
        aria-label="START"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;line-height:6.61458302px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#323232;stroke-width:0.26458332;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -245,5 +246,34 @@
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="ccccc"
        onclick="console.log(1)" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;line-height:6.61458302px;font-family:Cambria;-inkscape-font-specification:'Cambria, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       id="text6713"
+       x="-9.1665281"
+       y="42.79673"><tspan
+   id="tspan6711"
+   style="stroke-width:0.26458332">Hello</tspan></text>
+    <path
+       style="fill:#3c3c3c;fill-opacity:1;stroke:#3c3c3c;stroke-width:0.27134946;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path6745"
+       transform="scale(1,-1)"
+       sodipodi:type="arc"
+       sodipodi:cx="32.193935"
+       sodipodi:cy="-264.07132"
+       sodipodi:rx="31.339483"
+       sodipodi:ry="31.339483"
+       sodipodi:start="4.5626211"
+       sodipodi:end="4.8702659"
+       sodipodi:open="true"
+       d="m 27.517814,-295.05998 a 31.339483,31.339483 0 0 1 9.603374,0.0389" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11666656px;line-height:6.61458302px;font-family:Arial;-inkscape-font-specification:Arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#a0a0a0;fill-opacity:1;stroke:#a0a0a0;stroke-width:0;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       id="text6749"><textPath
+         xlink:href="#path6745"
+         id="textPath6751"><tspan
+   style="stroke-width:0;font-size:1.4111111px;fill:#a0a0a0;fill-opacity:1;stroke:#a0a0a0;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+   id="tspan6747">© curt hill 2017</tspan></textPath></text>
   </g>
 </svg>
