@@ -9,7 +9,7 @@ body {
 h5 {
     text-align: center;
     margin-top: 10px;
-    margin-bottom: 0px;
+    margin-bottom: 30px;
 }
 
 html, body { 
@@ -39,24 +39,6 @@ html, body {
     height: 50px;
 }
 
-#X {
-    color: #F00;
-}
-
-#O {
-    color: #0F0;
-}
-
-#X, #O {
-    font-size: 30px;
-    font-weight: 600;
-    font-family: sans-serif;
-}
-
-#X, #O, canvas {
-    cursor: pointer;
-}
-
 @media screen and (max-width: 383px) {
     h5 {
         font-size: 32px;
@@ -67,8 +49,9 @@ html, body {
     fill: #00f5ff;
     stroke: #00f5ff;
 }
-/*@media screen and (max-width: 400px) {
-    #message {
-        font-size: 14px;
+
+@media screen and (max-width: 420px) {
+    #simon {
+        width: 100%;
     }  
-}*/
+}
