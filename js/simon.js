@@ -42,9 +42,11 @@ var
 
     function setEventHandlers() {
         jqueryMap.colorButtons.forEach(function ($button, buttonNumber) {
-            $button.mousedown(function () {
+            $button.bind('touchstart mousedown', function () {
                 handleMouseDown(buttonNumber);
-            }).mouseup(function () {
+            });
+
+            $button.bind('touchend mouseup', function () {
                 handleMouseUp(buttonNumber);
             });
         });
