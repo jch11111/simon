@@ -1,33 +1,52 @@
+/*
+* simon.js
+* Shell module
+*/
+
 var simon = (function () {
     "use strict";
 
-    var $colorButton1;
+    //----------------------- BEGIN MODULE SCOPE VARIABLES -----------------------
+var
+    configMap = {
+        buttonColorPressed: ['#FFAAAA', 'AAF5FF', 'FFFFAA', 'AAFFAA'],
+        buttonColor: ['#FF0000', '00E1FF', 'F5F500', '00E100']
+    },
+    jqueryMap = {
+        colorButtons: []
+    };
+    //----------------------- END MODULE SCOPE VARIABLES -----------------------
 
     function init() {
         $(window).load(function () {
+            initializeJqueryMap();
             setEventHandlers();
         })
     };
 
-    function handleMouseDown(buttonNumber) {
-        $($colorButton1).css('fill', '#F66');
+    function initializeJqueryMap () {
+        var $gameImage = jqueryMap.$gameImage = $(document.getElementById('gameImage').contentDocument);
+        jqueryMap.colorButtons.push($($gameImage).find('#colorButton0'));
+        jqueryMap.colorButtons.push($($gameImage).find('#colorButton1'));
+        jqueryMap.colorButtons.push($($gameImage).find('#colorButton2'));
+        jqueryMap.colorButtons.push($($gameImage).find('#colorButton3'));
     }
 
-    function handleMouseUp(buttonNumber) {
-        $($colorButton1).css('fill', '#F00');
+    function handleMouseDown(button) {
+        $(jqueryMap.colorButtons[button]).css('fill', configMap.buttonColorPressed[button]);
+    }
+
+    function handleMouseUp(button) {
+        $(jqueryMap.colorButtons[button]).css('fill', configMap.buttonColor[button]);
     }
 
     function setEventHandlers() {
-        
-        var $gameImage = $(document.getElementById('gameImage').contentDocument);
-        $colorButton1 = $($gameImage).find('#colorButton1');
-
-        $($colorButton1).mousedown(function () {
-            handleMouseDown(1);
-        });
-
-        $($colorButton1).mouseup(function () {
-            handleMouseUp(1);
+        jqueryMap.colorButtons.forEach(function ($button, buttonNumber) {
+            $button.mousedown(function () {
+                handleMouseDown(buttonNumber);
+            }).mouseup(function () {
+                handleMouseUp(buttonNumber);
+            });
         });
     }
 
