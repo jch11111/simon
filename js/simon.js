@@ -1,24 +1,34 @@
-var tictactoe = (function () {
+var simon = (function () {
+    "use strict";
+
+    var $colorButton1;
 
     function init() {
-        $(function () {
+        $(window).load(function () {
             setEventHandlers();
         })
     };
 
+    function handleMouseDown(buttonNumber) {
+        $($colorButton1).css('fill', '#F66');
+    }
+
+    function handleMouseUp(buttonNumber) {
+        $($colorButton1).css('fill', '#F00');
+    }
+
     function setEventHandlers() {
-        $('#path5283').click(function () {
-            console.log('path5283');
-        })
-        $('#path5285').click(function () {
-            console.log('path5285');
-        })
-        $('#path5287').click(function () {
-            console.log('path5287');
-        })
-        $('#path5289').click(function () {
-            console.log('path5289');
-        })
+        
+        var $gameImage = $(document.getElementById('gameImage').contentDocument);
+        $colorButton1 = $($gameImage).find('#colorButton1');
+
+        $($colorButton1).mousedown(function () {
+            handleMouseDown(1);
+        });
+
+        $($colorButton1).mouseup(function () {
+            handleMouseUp(1);
+        });
     }
 
     return {
@@ -26,4 +36,4 @@ var tictactoe = (function () {
     };
 }());
 
-tictactoe.init();
+simon.init();

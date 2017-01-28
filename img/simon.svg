@@ -219,28 +219,28 @@
          inkscape:connector-curvature="0" />
     </g>
     <path
-       style="fill:#00f5ff;fill-opacity:1;stroke:#00f5ff;stroke-width:0.52916664;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#00f5ff;fill-opacity:1;stroke:#3c3c3c;stroke-width:0.52916664;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="m 61.305332,265.39153 c -0.61794,15.16309 -12.73028,27.33485 -27.89016,28.02699 l 0.0142,-15.17437 c 6.78054,-0.65091 12.12772,-6.05357 12.70861,-12.84047 z"
        id="colorButton2"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="ccccc"
        onclick="console.log(2)" />
     <path
-       style="fill:#feff00;fill-opacity:1;stroke:#ffff00;stroke-width:0.52916664;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#feff00;fill-opacity:1;stroke:#3c3c3c;stroke-width:0.52916664;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="M 30.733724,278.24422 C 23.953161,277.59363 18.605732,272.19126 18.024496,265.4044 L 2.8570708,265.392 c 0.618138,15.16205 12.7291352,27.33319 27.8879412,28.02643 z"
        id="colorButton3"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="ccccc"
        onclick="console.log(3)" />
     <path
-       style="fill:#00ff00;fill-opacity:1;stroke:#00ff00;stroke-width:0.52916664;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#00ff00;fill-opacity:1;stroke:#3c3c3c;stroke-width:0.52916664;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="m 18.052368,262.70656 c 0.70963,-6.66351 6.008752,-11.9084 12.679206,-12.54945 l 0.01303,-15.17439 C 15.696318,235.67111 3.6320848,247.67658 2.8702248,262.72133 Z"
        id="colorButton4"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="ccccc"
        onclick="console.log(4)" />
     <path
-       style="fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-width:0.52916664;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#ff0000;fill-opacity:1;stroke:#3c3c3c;stroke-width:0.52916664;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="m 46.110072,262.70709 c -0.70944,-6.66411 -6.00919,-11.90945 -12.68026,-12.55008 l -0.0171,-15.17453 c 15.04972,0.68582 27.11661,12.69115 27.8794,27.73717 z"
        id="colorButton1"
        inkscape:connector-curvature="0"
