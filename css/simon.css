@@ -54,4 +54,7 @@ html, body {
     #simon {
         width: 100%;
     }  
+    #pageContent {
+        padding: 0;
+    }
 }
