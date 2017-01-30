@@ -38,7 +38,7 @@ var
 
     function initializeButtonSound (button) {
         var buttonSound = document.createElement('audio');
-        buttonSound.setAttribute('src', 'media/sound' + button + '.ogg');
+        buttonSound.setAttribute('src', 'media/sound' + button + '.mp3');
         jqueryMap.buttonSounds.push(buttonSound);
     }
 
@@ -83,10 +83,12 @@ var
         jqueryMap.colorButtons.forEach(function ($button, buttonNumber) {
             $button.bind('touchstart mousedown', function () {
                 handleMouseDown(buttonNumber);
+                return false;
             });
 
             $button.bind('touchend mouseup', function () {
                 handleMouseUp(buttonNumber);
+                return false;
             });
         });
     }
