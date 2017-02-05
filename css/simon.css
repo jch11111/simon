@@ -50,6 +50,10 @@ html, body {
     stroke: #00f5ff;
 }
 
+#gameImage #colorButton1:hover {
+    cursor: pointer;
+}
+
 @media screen and (max-width: 420px) {
     #simon {
         width: 100%;

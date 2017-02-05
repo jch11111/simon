@@ -10,11 +10,18 @@ var simon = (function () {
 var
     configMap = {
         buttonColorPressed: ['#FFAAAA', 'AAF5FF', 'FFFFAA', 'AAFFAA'],
-        buttonColor: ['#FF0000', '00E1FF', 'F5F500', '00E100']
+        buttonColor: ['#FF0000', '00E1FF', 'F5F500', '00E100'],
+        startButtonColorOff: '#A00000',
+        strictButtonColorOff: '#00A000',
+        startButtonColorOn: '#FF4444',
+        strictButtonColorOn: '#44FF44',
     },
     jqueryMap = {
         colorButtons: [],
         buttonSounds: []
+    },
+    stateMap = {
+        isStrictMode: false
     };
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
 
@@ -26,6 +33,14 @@ var
     function handleMouseUp(button) {
         $(jqueryMap.colorButtons[button]).css('fill', configMap.buttonColor[button]);
         jqueryMap.buttonSounds[button].pause();
+    }
+
+    function handleStartButtonClick() {
+        $(jqueryMap.$startButton).css('fill', configMap.startButtonColorOn);
+    }
+
+    function handleStrictButtonClick() {
+        toggleStrictMode();
     }
 
     function init() {
@@ -48,31 +63,15 @@ var
         jqueryMap.colorButtons.push($($gameImage).find('#colorButton1'));
         jqueryMap.colorButtons.push($($gameImage).find('#colorButton2'));
         jqueryMap.colorButtons.push($($gameImage).find('#colorButton3'));
+        jqueryMap.$startButton = $($gameImage).find('#startButton');
+        jqueryMap.$strictButton = $($gameImage).find('#strictButton');
     }
 
     function initializeSounds () {
         for (var button = 0; button < 4; button++) {
             initializeButtonSound(button);
         }
-        //var buttonSound = document.createElement('audio');
-        //buttonSound.setAttribute('src', 'media/sound0.ogg');
-        //jqueryMap.buttonSounds.push(buttonSound);
-
-        //buttonSound.loop = false;
-
-        //buttonSound.addEventListener('ended', function () {
-        //    playSound(this);
-        //}, false);
-
-        //buttonSound.addEventListener("timeupdate", function () {
-        //    if ( this.currentTime === this.duration ) {
-        //        playSound (this);
-        //    }
-        //}, false);
-
     }
-
-
 
     function playSound(buttonSound) {
         buttonSound.currentTime = 0;
@@ -91,6 +90,23 @@ var
                 return false;
             });
         });
+        jqueryMap.$startButton.click(function () {
+            handleStartButtonClick();
+            return false;
+        })
+        jqueryMap.$strictButton.click(function () {
+            handleStrictButtonClick();
+            return false;
+        })
+        
+    }
+
+    function toggleStrictMode() {
+        var strictButtonColor;
+
+        stateMap.isStrictMode = !stateMap.isStrictMode;
+        strictButtonColor = stateMap.isStrictMode ? configMap.strictButtonColorOn : configMap.strictButtonColorOff;
+        $(jqueryMap.$strictButton).css('fill', strictButtonColor);
     }
 
     return {
