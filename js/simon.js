@@ -9,68 +9,93 @@ var simon = (function () {
     //----------------------- BEGIN MODULE SCOPE VARIABLES -----------------------
 var
     configMap = {
-        buttonColorPressed: ['#FFAAAA', 'AAF5FF', 'FFFFAA', 'AAFFAA'],
-        buttonColor: ['#FF0000', '00E1FF', 'F5F500', '00E100'],
+        buttonColorPressed: new Map(),
+        buttonColor: new Map(),
         startButtonColorOff: '#A00000',
         strictButtonColorOff: '#00A000',
         startButtonColorOn: '#FF4444',
         strictButtonColorOn: '#44FF44',
+        buttonSounds: new Map()
     },
     jqueryMap = {
-        colorButtons: [],
-        buttonSounds: []
+        colorButtons: new Map(),
+        $startButton: null,
+        $strictButton: null
     },
     stateMap = {
         isStrictMode: false
     };
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
-
-    function handleMouseDown(button) {
-        $(jqueryMap.colorButtons[button]).css('fill', configMap.buttonColorPressed[button]);
-        playSound(jqueryMap.buttonSounds[button]);
+    function handleButtonMouseOver () {
+        $(this).css('cursor', 'pointer');
+        return false;
     }
 
-    function handleMouseUp(button) {
-        $(jqueryMap.colorButtons[button]).css('fill', configMap.buttonColor[button]);
-        jqueryMap.buttonSounds[button].pause();
+    function handleButtonMouseOut() {
+        $(this).css('cursor', 'default');
+        return false;
+    }
+
+    function handleColorButtonMouseDown() {
+        $(this).css('fill', configMap.buttonColorPressed.get(this.id));
+        playSound(configMap.buttonSounds.get(this.id));
+        return false;
+    }
+
+    function handleColorButtonMouseUp() {
+        $(this).css('fill', configMap.buttonColor.get(this.id));
+        configMap.buttonSounds.get(this.id).pause();
+        return false;
     }
 
     function handleStartButtonClick() {
         $(jqueryMap.$startButton).css('fill', configMap.startButtonColorOn);
+        return false;
     }
 
     function handleStrictButtonClick() {
         toggleStrictMode();
+        return false;
     }
 
     function init() {
         $(window).load(function () {
             initializeJqueryMap();
+            initializeConfigMap();
             initializeSounds();
             setEventHandlers();
         })
     };
 
-    function initializeButtonSound (button) {
-        var buttonSound = document.createElement('audio');
-        buttonSound.setAttribute('src', 'media/sound' + button + '.mp3');
-        jqueryMap.buttonSounds.push(buttonSound);
+    function initializeConfigMap () {
+        configMap.buttonColorPressed.set('colorButton0','#FFAAAA');
+        configMap.buttonColorPressed.set('colorButton1','#AAF5FF');
+        configMap.buttonColorPressed.set('colorButton2','#FFFFAA');
+        configMap.buttonColorPressed.set('colorButton3','#AAFFAA');
+
+        configMap.buttonColor.set('colorButton0','#FF0000');
+        configMap.buttonColor.set('colorButton1','#00E1FF');
+        configMap.buttonColor.set('colorButton2','#F5F500');
+        configMap.buttonColor.set('colorButton3','#00E100');
     }
 
     function initializeJqueryMap() {
         var $gameImage = jqueryMap.$gameImage = $(document.getElementById('gameImage').contentDocument);
-        jqueryMap.colorButtons.push($($gameImage).find('#colorButton0'));
-        jqueryMap.colorButtons.push($($gameImage).find('#colorButton1'));
-        jqueryMap.colorButtons.push($($gameImage).find('#colorButton2'));
-        jqueryMap.colorButtons.push($($gameImage).find('#colorButton3'));
+        jqueryMap.colorButtons.set('colorButton0', $($gameImage).find('#colorButton0'));
+        jqueryMap.colorButtons.set('colorButton1', $($gameImage).find('#colorButton1'));
+        jqueryMap.colorButtons.set('colorButton2', $($gameImage).find('#colorButton2'));
+        jqueryMap.colorButtons.set('colorButton3', $($gameImage).find('#colorButton3'));
+
         jqueryMap.$startButton = $($gameImage).find('#startButton');
         jqueryMap.$strictButton = $($gameImage).find('#strictButton');
     }
 
     function initializeSounds () {
-        for (var button = 0; button < 4; button++) {
-            initializeButtonSound(button);
-        }
+        jqueryMap.colorButtons.forEach(function ($button, buttonId) {
+            var buttonSound = document.createElement('audio');
+            buttonSound.setAttribute('src', 'media/sound_' + buttonId + '.mp3');
+            configMap.buttonSounds.set(buttonId, buttonSound);
+        });
     }
 
     function playSound(buttonSound) {
@@ -79,26 +104,15 @@ var
     }
 
     function setEventHandlers() {
-        jqueryMap.colorButtons.forEach(function ($button, buttonNumber) {
-            $button.bind('touchstart mousedown', function () {
-                handleMouseDown(buttonNumber);
-                return false;
-            });
+        jqueryMap.colorButtons.forEach(function ($button) {
+            $button.bind('touchstart mousedown', handleColorButtonMouseDown);
+            $button.bind('touchend mouseup', handleColorButtonMouseUp);
+            $button.hover(handleButtonMouseOver, handleButtonMouseOut);
 
-            $button.bind('touchend mouseup', function () {
-                handleMouseUp(buttonNumber);
-                return false;
-            });
+            //$button.hover()
         });
-        jqueryMap.$startButton.click(function () {
-            handleStartButtonClick();
-            return false;
-        })
-        jqueryMap.$strictButton.click(function () {
-            handleStrictButtonClick();
-            return false;
-        })
-        
+        jqueryMap.$startButton.click(handleStartButtonClick);
+        jqueryMap.$strictButton.click(handleStrictButtonClick);
     }
 
     function toggleStrictMode() {

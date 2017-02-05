@@ -50,7 +50,7 @@ html, body {
     stroke: #00f5ff;
 }
 
-#gameImage #colorButton1:hover {
+#colorButton1:hover {
     cursor: pointer;
 }
 
