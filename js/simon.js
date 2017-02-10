@@ -161,8 +161,8 @@ var
         });
 
         jqueryMap.controlButtons.forEach(function ($button) {
-            $button.bind('click', handleControlButtonClick);
-            $button.bind('touchstart', function () { return false; });
+            $button.bind('click touchstart', handleControlButtonClick);
+            //$button.bind('touchstart', function () { return false; });
             $button.hover(handleButtonMouseOver, handleButtonMouseOut);
         });
 
