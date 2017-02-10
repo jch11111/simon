@@ -79,7 +79,7 @@ var
             $(restartButton).css('fill', buttonColor);
             flashCount--;
 
-            if (flashCount) {
+            if (flashCount && stateMap.isGameOn) {
                 setTimeout(flasher, flashDuration);
             } else {
                 $(restartButton).css('fill', buttonColorDark);
@@ -145,8 +145,12 @@ var
         buttonSound.play();
     }
 
-    function setButtonState ($button, buttonState) {
-    
+    function setButtonState ($button, isButtonOn) {
+        var stateMapProperty = $button.id === 'strictButton' ? 'isStrictMode' : 'isGameOn',
+            colorMap = isButtonOn ? configMap.buttonColorsLigtht : configMap.buttonColorsDark;
+
+        stateMap[stateMapProperty] = isButtonOn;
+        $($button).css('fill', colorMap.get($button.id));
     }
 
     function setEventHandlers() {
@@ -158,24 +162,26 @@ var
 
         jqueryMap.controlButtons.forEach(function ($button) {
             $button.bind('click', handleControlButtonClick);
+            $button.bind('touchstart', function () { return false; });
             $button.hover(handleButtonMouseOver, handleButtonMouseOut);
         });
 
     }
 
-    function toggleMode(button) {
-        var colorMap,
-            stateMapProperty;
+    function toggleMode($button) {
+        var isOnOffButton = $button.id === 'onOffButton',
+            isButtonOn = isOnOffButton ? stateMap.isGameOn : stateMap.isStrictMode,
+            isButtonGoingOff = isButtonOn;
 
-        if (button.id !== 'onOffButton' && !stateMap.isGameOn) {
+        if (!stateMap.isGameOn && !isOnOffButton)  {
             return false;
         }
 
-        stateMapProperty = button.id === 'strictButton' ? 'isStrictMode' : 'isGameOn';
+        setButtonState($button, !isButtonOn);
 
-        stateMap[stateMapProperty] = !stateMap[stateMapProperty];
-        colorMap = stateMap[stateMapProperty] ? configMap.buttonColorsLigtht : configMap.buttonColorsDark;
-        $(button).css('fill', colorMap.get(button.id));
+        if (isOnOffButton && isButtonGoingOff) {
+            setButtonState(jqueryMap.controlButtons.get('strictButton')[0], false);
+        }
     }
 
     return {
