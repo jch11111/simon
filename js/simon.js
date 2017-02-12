@@ -7,82 +7,98 @@ var simon = (function () {
     "use strict";
 
     //----------------------- BEGIN MODULE SCOPE VARIABLES -----------------------
-var
-    configMap = {
-        buttonColorsLigtht: new Map(),
-        buttonColorsDark: new Map(),
-        buttonSounds: new Map(),
-        buttonStates: {
-            on: true,
-            off: false
-        }
-    },
-    jqueryMap = {
-        gameButtons: new Map(),
-        controlButtons: new Map()
-    },
-    stateMap = {
-        isStrictMode: false,
-        isGameOn: false
-    };
+    var
+        configMap = {
+            buttonColorsLigtht: new Map(),
+            buttonColorsDark: new Map(),
+            buttonSounds: new Map()
+        },
+        jqueryMap = {
+            gameButtons: new Map(),
+            controlButtons: new Map(),
+            scoreDisplay: null
+        },
+        stateMap = {
+            isStrictMode: false,
+            isGameOn: false,
+            score: 0
+        };
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
+    function displayScore () {
+        jqueryMap.scoreDisplay.text(stateMap.score);
+        console.log(stateMap.score);
+    }
+
     function handleButtonMouseOver () {
-        $(this).css('cursor', 'pointer');
+        var $button = this;
+        $($button).css('cursor', 'pointer');
         return false;
     }
 
     function handleButtonMouseOut() {
-        $(this).css('cursor', 'default');
+        var $button = this;
+        $($button).css('cursor', 'default');
         return false;
     }
 
     function handleGameButtonMouseDown() {
-        $(this).css('fill', configMap.buttonColorsLigtht.get(this.id));
-        playSound(configMap.buttonSounds.get(this.id));
+        var $button = this;
+        if (!stateMap.isGameOn) {
+            return false;
+        }
+        $($button).css('fill', configMap.buttonColorsLigtht.get($button.id));
+        playSound(configMap.buttonSounds.get($button.id));
         return false;
     }
 
     function handleGameButtonMouseUp() {
-        $(this).css('fill', configMap.buttonColorsDark.get(this.id));
-        configMap.buttonSounds.get(this.id).pause();
+        var $button = this;
+        if (!stateMap.isGameOn) {
+            return false;
+        }
+        $($button).css('fill', configMap.buttonColorsDark.get($button.id));
+        configMap.buttonSounds.get($button.id).pause();
         return false;
     }
 
     function handleControlButtonClick () {
-        switch (this.id) {
+        var $button = this;
+        switch ($button.id) {
             case 'restartButton':
                 if (!stateMap.isGameOn) {
                     return false;
                 }
-                handleRestartButtonClick(this);
+                handleRestartButtonClick($button);
                 break;
             default:
-                toggleMode(this);
+                toggleMode($button);
                 break;
-
         }
         return false;
     }
 
-    function handleRestartButtonClick(restartButton) {
-        var buttonColorDark = configMap.buttonColorsDark.get(restartButton.id),
-            buttonColorBright = configMap.buttonColorsLigtht.get(restartButton.id),
+    function handleRestartButtonClick($restartButton) {
+        var buttonColorDark = configMap.buttonColorsDark.get($restartButton.id),
+            buttonColorBright = configMap.buttonColorsLigtht.get($restartButton.id),
             flashCount = 10,
             flashDuration = 200;
 
-        $(restartButton).css('fill', buttonColorBright);
+        stateMap.score = 0;
+        displayScore();
+
+        $($restartButton).css('fill', buttonColorBright);
 
         setTimeout(flasher, flashDuration);
         
         function flasher() {
             var buttonColor = flashCount % 2 ? buttonColorBright : buttonColorDark;
-            $(restartButton).css('fill', buttonColor);
+            $($restartButton).css('fill', buttonColor);
             flashCount--;
 
             if (flashCount && stateMap.isGameOn) {
                 setTimeout(flasher, flashDuration);
             } else {
-                $(restartButton).css('fill', buttonColorDark);
+                $($restartButton).css('fill', buttonColorDark);
             }
         }
         return false;
@@ -106,10 +122,10 @@ var
         configMap.buttonColorsLigtht.set('strictButton','#44FF44');
         configMap.buttonColorsLigtht.set('onOffButton', '#FF4444');
 
-        configMap.buttonColorsDark.set('colorButton0','#FF0000');
-        configMap.buttonColorsDark.set('colorButton1','#00E1FF');
-        configMap.buttonColorsDark.set('colorButton2','#F5F500');
-        configMap.buttonColorsDark.set('colorButton3','#00E100');
+        configMap.buttonColorsDark.set('colorButton0','#C80000');
+        configMap.buttonColorsDark.set('colorButton1','#00A0C8');
+        configMap.buttonColorsDark.set('colorButton2', '#C8C800');
+        configMap.buttonColorsDark.set('colorButton3','#00C800');
         configMap.buttonColorsDark.set('restartButton','#0000A0');
         configMap.buttonColorsDark.set('strictButton','#00A000');
         configMap.buttonColorsDark.set('onOffButton', '#A00000');
@@ -127,11 +143,9 @@ var
         jqueryMap.controlButtons.set('strictButton', $($gameImage).find('#strictButton'));
         jqueryMap.controlButtons.set('onOffButton', $($gameImage).find('#onOffButton'));
 
-        jqueryMap.controlButtons.forEach(function ($button) {
-            $button.buttonState = configMap.buttonStates.off;
-        })
+        jqueryMap.scoreDisplay = $($gameImage).find('#scoreDisplay');
     }
-
+    
     function initializeSounds () {
         jqueryMap.gameButtons.forEach(function ($button, buttonId) {
             var buttonSound = document.createElement('audio');
@@ -146,10 +160,14 @@ var
     }
 
     function setButtonState ($button, isButtonOn) {
-        var stateMapProperty = $button.id === 'strictButton' ? 'isStrictMode' : 'isGameOn',
+        var stateMapProperty = $button.id === 'strictButton' ? 'isStrictMode' 
+            : $button.id === 'onOffButton' ? 'isGameOn' : null,
             colorMap = isButtonOn ? configMap.buttonColorsLigtht : configMap.buttonColorsDark;
 
-        stateMap[stateMapProperty] = isButtonOn;
+        if (stateMapProperty) {
+            stateMap[stateMapProperty] = isButtonOn;
+        }
+
         $($button).css('fill', colorMap.get($button.id));
     }
 
@@ -169,6 +187,7 @@ var
     }
 
     function toggleMode($button) {
+        //TODO: too much button complexity here - separate button module with clean API
         var isOnOffButton = $button.id === 'onOffButton',
             isButtonOn = isOnOffButton ? stateMap.isGameOn : stateMap.isStrictMode,
             isButtonGoingOff = isButtonOn;
@@ -181,6 +200,8 @@ var
 
         if (isOnOffButton && isButtonGoingOff) {
             setButtonState(jqueryMap.controlButtons.get('strictButton')[0], false);
+            stateMap.score = '';
+            displayScore();
         }
     }
 
