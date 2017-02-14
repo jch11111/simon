@@ -1,0 +1,13 @@
+create a buttons module
+
+module can throw events like gameOn, gameOff, strictOn, strictOff, RestartGame
+
+shell can listen for these
+
+module can offer API's such as 
+buttons.turnOn($button)
+buttons.turnOff($button)
+
+buttons.registerButton(button, stateMapProperty, isToggled, hanldersArray) //this will add a new button and record which statemap property 
+
+the module whill add event handlers for click and 

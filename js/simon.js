@@ -19,15 +19,18 @@ var simon = (function () {
             scoreDisplay: null
         },
         stateMap = {
-            isStrictMode: false,
-            isGameOn: false,
-            score: 0
+            isStrictMode    : false,
+            isGameOn        : false,
+            isGameStarted   : false,
+            score           : 0
         };
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
     function displayScore () {
         jqueryMap.scoreDisplay.text(stateMap.score);
         console.log(stateMap.score);
     }
+
+    //----------------------- BEGIN EVENT HANDLERS -----------------------
 
     function handleButtonMouseOver () {
         var $button = this;
@@ -42,8 +45,8 @@ var simon = (function () {
     }
 
     function handleGameButtonMouseDown() {
-        var $button = this;
-        if (!stateMap.isGameOn) {
+        var $button = this
+        if (!stateMap.isGameOn || stateMap.isGameStarted) {
             return false;
         }
         $($button).css('fill', configMap.buttonColorsLigtht.get($button.id));
@@ -64,45 +67,47 @@ var simon = (function () {
     function handleControlButtonClick () {
         var $button = this;
         switch ($button.id) {
-            case 'restartButton':
+            case 'startButton':
                 if (!stateMap.isGameOn) {
                     return false;
                 }
-                handleRestartButtonClick($button);
+                handleStartButtonClick($button);
                 break;
             default:
-                toggleMode($button);
+                toggleButtonAndState($button);
                 break;
         }
         return false;
     }
 
-    function handleRestartButtonClick($restartButton) {
-        var buttonColorDark = configMap.buttonColorsDark.get($restartButton.id),
-            buttonColorBright = configMap.buttonColorsLigtht.get($restartButton.id),
+    function handleStartButtonClick($startButton) {
+        var buttonColorDark = configMap.buttonColorsDark.get($startButton.id),
+            buttonColorBright = configMap.buttonColorsLigtht.get($startButton.id),
             flashCount = 10,
             flashDuration = 200;
 
+        stateMap.isGameStarted = true;
         stateMap.score = 0;
         displayScore();
 
-        $($restartButton).css('fill', buttonColorBright);
+        $($startButton).css('fill', buttonColorBright);
 
         setTimeout(flasher, flashDuration);
         
         function flasher() {
             var buttonColor = flashCount % 2 ? buttonColorBright : buttonColorDark;
-            $($restartButton).css('fill', buttonColor);
+            $($startButton).css('fill', buttonColor);
             flashCount--;
 
             if (flashCount && stateMap.isGameOn) {
                 setTimeout(flasher, flashDuration);
             } else {
-                $($restartButton).css('fill', buttonColorDark);
+                $($startButton).css('fill', buttonColorDark);
             }
         }
         return false;
     }
+    //----------------------- END EVENT HANDLERS -----------------------
 
     function init() {
         $(window).load(function () {
@@ -118,7 +123,7 @@ var simon = (function () {
         configMap.buttonColorsLigtht.set('colorButton1','#AAF5FF');
         configMap.buttonColorsLigtht.set('colorButton2','#FFFFAA');
         configMap.buttonColorsLigtht.set('colorButton3','#AAFFAA');
-        configMap.buttonColorsLigtht.set('restartButton','#9696FF');
+        configMap.buttonColorsLigtht.set('startButton','#9696FF');
         configMap.buttonColorsLigtht.set('strictButton','#44FF44');
         configMap.buttonColorsLigtht.set('onOffButton', '#FF4444');
 
@@ -126,7 +131,7 @@ var simon = (function () {
         configMap.buttonColorsDark.set('colorButton1','#00A0C8');
         configMap.buttonColorsDark.set('colorButton2', '#C8C800');
         configMap.buttonColorsDark.set('colorButton3','#00C800');
-        configMap.buttonColorsDark.set('restartButton','#0000A0');
+        configMap.buttonColorsDark.set('startButton','#0000A0');
         configMap.buttonColorsDark.set('strictButton','#00A000');
         configMap.buttonColorsDark.set('onOffButton', '#A00000');
 
@@ -139,7 +144,7 @@ var simon = (function () {
         jqueryMap.gameButtons.set('colorButton2', $($gameImage).find('#colorButton2'));
         jqueryMap.gameButtons.set('colorButton3', $($gameImage).find('#colorButton3'));
 
-        jqueryMap.controlButtons.set('restartButton', $($gameImage).find('#restartButton'));
+        jqueryMap.controlButtons.set('startButton', $($gameImage).find('#startButton'));
         jqueryMap.controlButtons.set('strictButton', $($gameImage).find('#strictButton'));
         jqueryMap.controlButtons.set('onOffButton', $($gameImage).find('#onOffButton'));
 
@@ -159,7 +164,7 @@ var simon = (function () {
         buttonSound.play();
     }
 
-    function setButtonState ($button, isButtonOn) {
+    function setStateAndButtonColor ($button, isButtonOn) {
         var stateMapProperty = $button.id === 'strictButton' ? 'isStrictMode' 
             : $button.id === 'onOffButton' ? 'isGameOn' : null,
             colorMap = isButtonOn ? configMap.buttonColorsLigtht : configMap.buttonColorsDark;
@@ -186,7 +191,7 @@ var simon = (function () {
 
     }
 
-    function toggleMode($button) {
+    function toggleButtonAndState($button) {
         //TODO: too much button complexity here - separate button module with clean API
         var isOnOffButton = $button.id === 'onOffButton',
             isButtonOn = isOnOffButton ? stateMap.isGameOn : stateMap.isStrictMode,
@@ -196,11 +201,12 @@ var simon = (function () {
             return false;
         }
 
-        setButtonState($button, !isButtonOn);
+        setStateAndButtonColor($button, !isButtonOn);
 
         if (isOnOffButton && isButtonGoingOff) {
-            setButtonState(jqueryMap.controlButtons.get('strictButton')[0], false);
+            setStateAndButtonColor(jqueryMap.controlButtons.get('strictButton')[0], false);
             stateMap.score = '';
+            stateMap.isGameStarted = false;
             displayScore();
         }
     }
