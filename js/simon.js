@@ -22,7 +22,8 @@ var simon = (function () {
             isStrictMode    : false,
             isGameOn        : false,
             isGameStarted   : false,
-            score           : 0
+            score           : 0,
+            buttonSequence  : []
         };
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
     function displayScore () {
@@ -31,7 +32,6 @@ var simon = (function () {
     }
 
     //----------------------- BEGIN EVENT HANDLERS -----------------------
-
     function handleButtonMouseOver () {
         var $button = this;
         $($button).css('cursor', 'pointer');
@@ -81,33 +81,54 @@ var simon = (function () {
     }
 
     function handleStartButtonClick($startButton) {
-        var buttonColorDark = configMap.buttonColorsDark.get($startButton.id),
-            buttonColorBright = configMap.buttonColorsLigtht.get($startButton.id),
-            flashCount = 10,
-            flashDuration = 200;
+        flashButton($startButton);
 
         stateMap.isGameStarted = true;
         stateMap.score = 0;
         displayScore();
+        startGame();
+    }
+    //----------------------- END EVENT HANDLERS -----------------------
+    function flashButton ($button) {
+        var buttonColorDark = configMap.buttonColorsDark.get($button.id),
+            buttonColorBright = configMap.buttonColorsLigtht.get($button.id),
+            flashCount = 10,
+            flashDuration = 200;
 
-        $($startButton).css('fill', buttonColorBright);
+        $($button).css('fill', buttonColorBright);
 
         setTimeout(flasher, flashDuration);
-        
+
         function flasher() {
             var buttonColor = flashCount % 2 ? buttonColorBright : buttonColorDark;
-            $($startButton).css('fill', buttonColor);
+            $($button).css('fill', buttonColor);
             flashCount--;
 
             if (flashCount && stateMap.isGameOn) {
                 setTimeout(flasher, flashDuration);
             } else {
-                $($startButton).css('fill', buttonColorDark);
+                $($button).css('fill', buttonColorDark);
             }
         }
-        return false;
     }
-    //----------------------- END EVENT HANDLERS -----------------------
+
+    function generateButtonSequence() {
+        var i;
+        
+        stateMap.buttonSequence = [];
+
+        for ( i=1 ; i<=20; i++ ) {
+            stateMap.buttonSequence.push(i % 4);
+        }
+
+        shuffleSequence();
+
+        function shuffleSequence() {
+            stateMap.buttonSequence.sort(function (a, b) {
+                return 0.5 - Math.random();
+            });
+        }
+    }
 
     function init() {
         $(window).load(function () {
@@ -189,6 +210,11 @@ var simon = (function () {
             $button.hover(handleButtonMouseOver, handleButtonMouseOut);
         });
 
+    }
+
+    function startGame () {
+        generateButtonSequence();
+        console.log(stateMap.buttonSequence);
     }
 
     function toggleButtonAndState($button) {
