@@ -9,14 +9,15 @@ var simon = (function () {
     //----------------------- BEGIN MODULE SCOPE VARIABLES -----------------------
     var
         configMap = {
-            buttonColorsLigtht: new Map(),
-            buttonColorsDark: new Map(),
-            buttonSounds: new Map()
+            buttonColorsLigtht  : new Map(),
+            buttonColorsDark    : new Map(),
+            buttonSounds        : new Map(),
+            numberOfPlays       : 20
         },
         jqueryMap = {
-            gameButtons: new Map(),
-            controlButtons: new Map(),
-            scoreDisplay: null
+            gameButtons     : new Map(),
+            controlButtons  : new Map(),
+            scoreDisplay    : null
         },
         stateMap = {
             isStrictMode    : false,
@@ -117,7 +118,7 @@ var simon = (function () {
         
         stateMap.buttonSequence = [];
 
-        for ( i=1 ; i<=20; i++ ) {
+        for ( i = 1 ; i <= configMap.numberOfPlays; i++ ) {
             stateMap.buttonSequence.push(i % 4);
         }
 
@@ -180,9 +181,30 @@ var simon = (function () {
         });
     }
 
-    function playSound(buttonSound) {
+    function playSequence(playNumber) {
+        var currentTone,
+            buttonSounds = [
+                configMap.buttonSounds.get('colorButton0'),
+                configMap.buttonSounds.get('colorButton1'),
+                configMap.buttonSounds.get('colorButton2'),
+                configMap.buttonSounds.get('colorButton3')
+            ];
+
+        for ( currentTone = 0; currentTone <= playNumber; currentTone++ ) {
+            playSound(buttonSounds[stateMap.buttonSequence[currentTone]], 500);
+        }
+
+    }
+
+    function playSound(buttonSound, durationMs) {
         buttonSound.currentTime = 0;
         buttonSound.play();
+
+        if (durationMs) {
+            setTimeout ( function () {
+                buttonSound.pause();
+            }, durationMs);
+        }
     }
 
     function setStateAndButtonColor ($button, isButtonOn) {
@@ -213,8 +235,12 @@ var simon = (function () {
     }
 
     function startGame () {
+        var playNumber;
         generateButtonSequence();
-        console.log(stateMap.buttonSequence);
+
+        for (playNumber = 0; playNumber < configMap.numberOfPlays; playNumber++) {
+            playSequence(playNumber);
+        }
     }
 
     function toggleButtonAndState($button) {
