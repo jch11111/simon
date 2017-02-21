@@ -8,11 +8,19 @@ var simon = (function () {
 
     //----------------------- BEGIN MODULE SCOPE VARIABLES -----------------------
     var
+        COMPUTERS_TURN  = { who: 'computer'},
+        PLAYERS_TURN    = { who: 'player' },
         configMap = {
             buttonColorsLigtht  : new Map(),
             buttonColorsDark    : new Map(),
             buttonSounds        : new Map(),
-            numberOfPlays       : 20
+            numberOfPlays       : 20,
+            buttonIndex         : {
+                'colorButton0': 0,
+                'colorButton1': 1,
+                'colorButton2': 2,
+                'colorButton3': 3,
+            }
         },
         jqueryMap = {
             gameButtons     : new Map(),
@@ -20,11 +28,14 @@ var simon = (function () {
             scoreDisplay    : null
         },
         stateMap = {
-            isStrictMode    : false,
+            gameSequence    : [],
             isGameOn        : false,
             isGameStarted   : false,
+            isStrictMode    : false,
+            playNumber      : null,
             score           : 0,
-            buttonSequence  : []
+            userSequence    : null,
+            whoseTurn       : null
         };
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
     function displayScore () {
@@ -47,9 +58,18 @@ var simon = (function () {
 
     function handleGameButtonMouseDown() {
         var $button = this
-        if (!stateMap.isGameOn || stateMap.isGameStarted) {
+
+        if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
             return false;
         }
+
+        if (stateMap.whoseTurn === PLAYERS_TURN) {
+            stateMap.userSequence.push(configMap.buttonIndex[$button.id]);
+            if (!verifyUserPlay()) {
+                return false;
+            }
+        }
+
         $($button).css('fill', configMap.buttonColorsLigtht.get($button.id));
         playSound(configMap.buttonSounds.get($button.id));
         return false;
@@ -113,20 +133,20 @@ var simon = (function () {
         }
     }
 
-    function generateButtonSequence() {
+    function generateGameSequence() {
         var i;
         
-        stateMap.buttonSequence = [];
+        stateMap.gameSequence = [];
 
         for ( i = 1 ; i <= configMap.numberOfPlays; i++ ) {
-            stateMap.buttonSequence.push(i % 4);
+            stateMap.gameSequence.push(i % 4);
         }
 
         shuffleSequence();
-        console.log(stateMap.buttonSequence);
+        console.log(stateMap.gameSequence);
 
         function shuffleSequence() {
-            stateMap.buttonSequence.sort(function (a, b) {
+            stateMap.gameSequence.sort(function (a, b) {
                 return 0.5 - Math.random();
             });
         }
@@ -182,7 +202,7 @@ var simon = (function () {
         });
     }
 
-    function playSequence(playNumber) {
+    function playSequence() {
         var currentTone,
             buttonSounds = [
                 configMap.buttonSounds.get('colorButton0'),
@@ -201,11 +221,11 @@ var simon = (function () {
         playCurrentTone();
 
         function playCurrentTone () {
-            setButtonColor(buttons[stateMap.buttonSequence[currentTone]], true);
-            playSound(buttonSounds[stateMap.buttonSequence[currentTone]], 750)
+            setButtonColor(buttons[stateMap.gameSequence[currentTone]], true);
+            playSound(buttonSounds[stateMap.gameSequence[currentTone]], 750)
             .then(function () {
-                setButtonColor(buttons[stateMap.buttonSequence[currentTone]], false);
-                if (++currentTone <= playNumber) {
+                setButtonColor(buttons[stateMap.gameSequence[currentTone]], false);
+                if (++currentTone <= stateMap.playNumber) {
                     setTimeout(function () {
                         playCurrentTone();
                     }, 150);
@@ -213,7 +233,7 @@ var simon = (function () {
             });
         }
         //for ( currentTone = 0; currentTone <= playNumber; currentTone++ ) {
-        //    playSound(buttonSounds[stateMap.buttonSequence[currentTone]], 500);
+        //    playSound(buttonSounds[stateMap.gameSequence[currentTone]], 500);
         //}
     }
 
@@ -269,13 +289,17 @@ var simon = (function () {
     }
 
     function startGame () {
-        var playNumber;
-        generateButtonSequence();
+        stateMap.playNumber = 0;
+        stateMap.userSequence = [];
+        generateGameSequence();
+        stateMap.whoseTurn = COMPUTERS_TURN;
+
+        playSequence();
+        stateMap.whoseTurn = PLAYERS_TURN;
 
         //for (playNumber = 0; playNumber < configMap.numberOfPlays; playNumber++) {
         //    playSequence(playNumber);
         //}
-        playSequence(20);
     }
 
     function toggleButtonAndState($button) {
@@ -296,6 +320,18 @@ var simon = (function () {
             stateMap.isGameStarted = false;
             displayScore();
         }
+    }
+
+    function verifyUserPlay () {
+        var isUserCorrect = true;
+
+        stateMap.userSequence.forEach(function (buttonNumber, arrayIndex) {
+            if (stateMap.gameSequence[arrayIndex] != buttonNumber) {
+                isUserCorrect = false;
+            }
+        });
+
+        return isUserCorrect;
     }
 
     return {
