@@ -66,7 +66,9 @@ var simon = (function () {
         if (stateMap.whoseTurn === PLAYERS_TURN) {
             stateMap.userSequence.push(configMap.buttonIndex[$button.id]);
             if (!verifyUserPlay()) {
-                return false;
+                return false;  //TODO: Play fail sound
+            } else {
+                stateMap.whoseTurn = COMPUTERS_TURN;
             }
         }
 
@@ -296,6 +298,9 @@ var simon = (function () {
 
         playSequence();
         stateMap.whoseTurn = PLAYERS_TURN;
+
+        //how to know when user has played his turn? event? Write a function with a timer that calls itself and 
+        //resolves a promise when it is computers turn
 
         //for (playNumber = 0; playNumber < configMap.numberOfPlays; playNumber++) {
         //    playSequence(playNumber);
