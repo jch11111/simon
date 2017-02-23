@@ -35,7 +35,8 @@ var simon = (function () {
             playNumber      : null,
             score           : 0,
             userSequence    : null,
-            whoseTurn       : null
+            whoseTurn       : null,
+            userPlayValid   : true
         };
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
     function displayScore () {
@@ -66,9 +67,8 @@ var simon = (function () {
         if (stateMap.whoseTurn === PLAYERS_TURN) {
             stateMap.userSequence.push(configMap.buttonIndex[$button.id]);
             if (!verifyUserPlay()) {
+                stateMap.userPlayValid = false;
                 return false;  //TODO: Play fail sound
-            } else {
-                stateMap.whoseTurn = COMPUTERS_TURN;
             }
         }
 
@@ -84,6 +84,9 @@ var simon = (function () {
         }
         $($button).css('fill', configMap.buttonColorsDark.get($button.id));
         configMap.buttonSounds.get($button.id).pause();
+        if (stateMap.userPlayValid) {
+            stateMap.whoseTurn = COMPUTERS_TURN;
+        }
         return false;
     }
 
@@ -219,12 +222,18 @@ var simon = (function () {
                 jqueryMap.gameButtons.get('colorButton3')[0]
             ];
 
+        //for (currentTone = 0;currentTone <= stateMap.playNumber; currentTone++) {
+        //    playCurrentTone()
+        //    .then(function () {
+        //        return;
+        //    })
+        //}
         currentTone = 0;
         playCurrentTone();
 
         function playCurrentTone () {
             setButtonColor(buttons[stateMap.gameSequence[currentTone]], true);
-            playSound(buttonSounds[stateMap.gameSequence[currentTone]], 750)
+            var promise = playSound(buttonSounds[stateMap.gameSequence[currentTone]], 750)
             .then(function () {
                 setButtonColor(buttons[stateMap.gameSequence[currentTone]], false);
                 if (++currentTone <= stateMap.playNumber) {
@@ -233,6 +242,7 @@ var simon = (function () {
                     }, 150);
                 }
             });
+            return promise;
         }
         //for ( currentTone = 0; currentTone <= playNumber; currentTone++ ) {
         //    playSound(buttonSounds[stateMap.gameSequence[currentTone]], 500);
@@ -299,6 +309,13 @@ var simon = (function () {
         playSequence();
         stateMap.whoseTurn = PLAYERS_TURN;
 
+        waitForComputersTurn()
+        .then(function () {
+            stateMap.playNumber++;
+            playSequence();
+            stateMap.whoseTurn = PLAYERS_TURN;
+        });
+
         //how to know when user has played his turn? event? Write a function with a timer that calls itself and 
         //resolves a promise when it is computers turn
 
@@ -328,6 +345,7 @@ var simon = (function () {
     }
 
     function verifyUserPlay () {
+        //next: fix this - only works for first play
         var isUserCorrect = true;
 
         stateMap.userSequence.forEach(function (buttonNumber, arrayIndex) {
@@ -337,6 +355,29 @@ var simon = (function () {
         });
 
         return isUserCorrect;
+    }
+
+    // waitForComputersTurn 
+    // returns a promise that resolves when the user has finished his turn or after user turn has timed out
+    function waitForComputersTurn () {
+
+        var promise = new Promise(function (resolve, reject) {
+            
+            checkIfComputersTurn();
+
+            function checkIfComputersTurn () {
+                if (stateMap.whoseTurn === COMPUTERS_TURN) {
+                    resolve();
+                } else {
+                    setTimeout(function () {
+                        checkIfComputersTurn();
+                    }, 500);
+                }
+            }
+        });
+
+        return promise;
+
     }
 
     return {
