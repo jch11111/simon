@@ -59,6 +59,7 @@ var simon = (function () {
     }
 
     function handleGameButtonMouseDown() {
+        console.log('handleGameButtonMouseDown');
         var $button = this
         console.log(stateMap.currentPlayerTone);
         console.log(stateMap.whoseTurn);
@@ -70,6 +71,7 @@ var simon = (function () {
             stateMap.userSequence.push(configMap.buttonIndex[$button.id]);
             stateMap.currentPlayerTone++;
             if (!verifyUserPlay()) {
+                console.log('invalid play');
                 stateMap.userPlayValid = false;
                 return false;  //TODO: Play fail sound
             }
@@ -316,17 +318,11 @@ var simon = (function () {
         waitForComputersTurn()
         .then(function () {
             stateMap.playNumber++;
+            stateMap.userSequence = [];
             stateMap.currentPlayerTone = -1;
             playSequence();
             stateMap.whoseTurn = PLAYERS_TURN;
         });
-
-        //how to know when user has played his turn? event? Write a function with a timer that calls itself and 
-        //resolves a promise when it is computers turn
-
-        //for (playNumber = 0; playNumber < configMap.numberOfPlays; playNumber++) {
-        //    playSequence(playNumber);
-        //}
     }
 
     function toggleButtonAndState($button) {
@@ -352,6 +348,12 @@ var simon = (function () {
     function verifyUserPlay () {
         //next: fix this - only works for first play
         var currentPlayerTone = stateMap.currentPlayerTone;
+
+        if (stateMap.userSequence[currentPlayerTone] !== stateMap.gameSequence[currentPlayerTone]) {
+            console.log('stateMap.userSequence', stateMap.userSequence);
+            console.log('stateMap.gameSequence', stateMap.gameSequence);
+            console.log('currentPlayerTone', currentPlayerTone);
+        }
 
         return stateMap.userSequence[currentPlayerTone] === stateMap.gameSequence[currentPlayerTone];
         //stateMap.userSequence.forEach(function (buttonNumber, arrayIndex) {
