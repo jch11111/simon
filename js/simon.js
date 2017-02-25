@@ -313,7 +313,7 @@ var simon = (function () {
 
     function startGame () {
         console.log('start game');
-        stateMap.userPlayValid = false; //if the user has started game while other game already in progress, this will resolve wasPlayerTurnValid
+        stateMap.userPlayValid = true;
         stateMap.playNumber = 0;
         stateMap.userSequence = [];
         generateGameSequence();
@@ -326,7 +326,6 @@ var simon = (function () {
             playSequence()
             .then(function () {
                 stateMap.whoseTurn = PLAYERS_TURN;
-                stateMap.userPlayValid = true;
                 return wasPlayerTurnValid()
             })
             .then(function (_wasPlayerTurnValid) {
@@ -394,10 +393,10 @@ var simon = (function () {
             checkIfComputersTurn();
 
             function checkIfComputersTurn () {
-                if (!stateMap.userPlayValid) {
+                if (stateMap.whoseTurn === COMPUTERS_TURN) {
                     _wasPlayerTurnValid = true;
                     resolve(_wasPlayerTurnValid);
-                } else if (stateMap.whoseTurn === COMPUTERS_TURN) {
+                } else if (!stateMap.userPlayValid) {
                     _wasPlayerTurnValid = false;
                     resolve(_wasPlayerTurnValid);
                 } else {
