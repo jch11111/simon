@@ -36,7 +36,8 @@ var simon = (function () {
             score           : 0,
             userSequence    : null,
             whoseTurn       : null,
-            userPlayValid   : true
+            userPlayValid   : true,
+            currentPlayerTone : null
         };
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
     function displayScore () {
@@ -59,13 +60,15 @@ var simon = (function () {
 
     function handleGameButtonMouseDown() {
         var $button = this
-
+        console.log(stateMap.currentPlayerTone);
+        console.log(stateMap.whoseTurn);
         if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
             return false;
         }
 
         if (stateMap.whoseTurn === PLAYERS_TURN) {
             stateMap.userSequence.push(configMap.buttonIndex[$button.id]);
+            stateMap.currentPlayerTone++;
             if (!verifyUserPlay()) {
                 stateMap.userPlayValid = false;
                 return false;  //TODO: Play fail sound
@@ -84,7 +87,7 @@ var simon = (function () {
         }
         $($button).css('fill', configMap.buttonColorsDark.get($button.id));
         configMap.buttonSounds.get($button.id).pause();
-        if (stateMap.userPlayValid) {
+        if (stateMap.userPlayValid & stateMap.currentPlayerTone === stateMap.playNumber) {
             stateMap.whoseTurn = COMPUTERS_TURN;
         }
         return false;
@@ -305,6 +308,7 @@ var simon = (function () {
         stateMap.userSequence = [];
         generateGameSequence();
         stateMap.whoseTurn = COMPUTERS_TURN;
+        stateMap.currentPlayerTone = -1;
 
         playSequence();
         stateMap.whoseTurn = PLAYERS_TURN;
@@ -312,6 +316,7 @@ var simon = (function () {
         waitForComputersTurn()
         .then(function () {
             stateMap.playNumber++;
+            stateMap.currentPlayerTone = -1;
             playSequence();
             stateMap.whoseTurn = PLAYERS_TURN;
         });
@@ -346,15 +351,16 @@ var simon = (function () {
 
     function verifyUserPlay () {
         //next: fix this - only works for first play
-        var isUserCorrect = true;
+        var currentPlayerTone = stateMap.currentPlayerTone;
 
-        stateMap.userSequence.forEach(function (buttonNumber, arrayIndex) {
-            if (stateMap.gameSequence[arrayIndex] != buttonNumber) {
-                isUserCorrect = false;
-            }
-        });
+        return stateMap.userSequence[currentPlayerTone] === stateMap.gameSequence[currentPlayerTone];
+        //stateMap.userSequence.forEach(function (buttonNumber, arrayIndex) {
+        //    if (stateMap.gameSequence[arrayIndex] != buttonNumber) {
+        //        isUserCorrect = false;
+        //    }
+        //});
 
-        return isUserCorrect;
+        //return isUserCorrect;
     }
 
     // waitForComputersTurn 
