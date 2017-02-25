@@ -308,18 +308,23 @@ var simon = (function () {
         stateMap.whoseTurn = COMPUTERS_TURN;
         stateMap.currentPlayerTone = -1;
 
-        playSequence()
-        .then(function() {
-            stateMap.whoseTurn = PLAYERS_TURN;
-            return waitForComputersTurn()
-        })
-        .then(function () {
-            stateMap.playNumber++;
-            stateMap.userSequence = [];
-            stateMap.currentPlayerTone = -1;
-            playSequence();
-            stateMap.whoseTurn = PLAYERS_TURN;
-        });
+        playSequenceAndWaitForUser();
+
+        function playSequenceAndWaitForUser () {
+            playSequence()
+            .then(function () {
+                stateMap.whoseTurn = PLAYERS_TURN;
+                return waitForComputersTurn()
+            })
+            .then(function () {
+                stateMap.playNumber++;
+                stateMap.userSequence = [];
+                stateMap.currentPlayerTone = -1;
+                if (stateMap.playNumber <= configMap.numberOfPlays) {
+                    playSequenceAndWaitForUser();
+                }
+            });
+        }
     }
 
     function toggleButtonAndState($button) {
