@@ -28,16 +28,16 @@ var simon = (function () {
             scoreDisplay    : null
         },
         stateMap = {
-            gameSequence    : [],
-            isGameOn        : false,
-            isGameStarted   : false,
-            isStrictMode    : false,
-            playNumber      : null,
-            score           : 0,
-            userSequence    : null,
-            whoseTurn       : null,
-            userPlayValid   : true,
-            currentPlayerTone : null
+            gameSequence                : [],
+            isGameOn                    : false,
+            isGameStarted               : false,
+            isStrictMode                : false,
+            playNumber                  : null,
+            score                       : 0,
+            userSequence                : null,
+            whoseTurn                   : null,
+            userPlayValid               : true,
+            currentPlayerTone           : null
         };
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
     function displayScore () {
@@ -67,13 +67,18 @@ var simon = (function () {
             return false;
         }
 
+        if (!stateMap.userPlayValid) {
+            playFailSound();
+            return;
+        }
+
         if (stateMap.whoseTurn === PLAYERS_TURN) {
             stateMap.userSequence.push(configMap.buttonIndex[$button.id]);
             stateMap.currentPlayerTone++;
             if (!verifyUserPlay()) {
                 console.log('invalid play');
                 stateMap.userPlayValid = false;
-                playSound(configMap.buttonSounds.get('fail'), 500);
+                playFailSound();
                 return false;  //TODO: Play fail sound
             }
         }
@@ -217,6 +222,10 @@ var simon = (function () {
         configMap.buttonSounds.set('fail', buttonSound);
     }
 
+    function playFailSound () {
+        playSound(configMap.buttonSounds.get('fail'), 500);
+    }
+
     function playSequence() {
         var currentTone,
             buttonSounds = [
@@ -240,6 +249,7 @@ var simon = (function () {
             var promise = playSound(buttonSounds[stateMap.gameSequence[currentTone]], 750)
             .then(function () {
                 setButtonColor(buttons[stateMap.gameSequence[currentTone]], false);
+                console.log('currentTone', currentTone, 'playNumber', stateMap.playNumber);
                 if (++currentTone <= stateMap.playNumber) {
                     setTimeout(function () {
                         playCurrentTone();
@@ -302,6 +312,8 @@ var simon = (function () {
     }
 
     function startGame () {
+        console.log('start game');
+        stateMap.userPlayValid = false; //if the user has started game while other game already in progress, this will resolve wasPlayerTurnValid
         stateMap.playNumber = 0;
         stateMap.userSequence = [];
         generateGameSequence();
@@ -314,9 +326,14 @@ var simon = (function () {
             playSequence()
             .then(function () {
                 stateMap.whoseTurn = PLAYERS_TURN;
-                return waitForComputersTurn()
+                stateMap.userPlayValid = true;
+                return wasPlayerTurnValid()
             })
-            .then(function () {
+            .then(function (_wasPlayerTurnValid) {
+                console.log('_wasPlayerTurnValid', _wasPlayerTurnValid);
+                if (!_wasPlayerTurnValid) {
+                    return;
+                }
                 stateMap.playNumber++;
                 stateMap.userSequence = [];
                 stateMap.currentPlayerTone = -1;
@@ -368,26 +385,28 @@ var simon = (function () {
     }
 
 
-    function waitForComputersTurn () {
-        // waitForComputersTurn 
+    function wasPlayerTurnValid () {
+        // wasPlayerTurnValid 
         // returns a promise that resolves when the user has finished his turn or after user turn has timed out
-        var promise = new Promise(function (resolve, reject) {
+        var _wasPlayerTurnValid;
+        return new Promise(function (resolve, reject) {
             
             checkIfComputersTurn();
 
             function checkIfComputersTurn () {
-                if (stateMap.whoseTurn === COMPUTERS_TURN) {
-                    resolve();
+                if (!stateMap.userPlayValid) {
+                    _wasPlayerTurnValid = true;
+                    resolve(_wasPlayerTurnValid);
+                } else if (stateMap.whoseTurn === COMPUTERS_TURN) {
+                    _wasPlayerTurnValid = false;
+                    resolve(_wasPlayerTurnValid);
                 } else {
                     setTimeout(function () {
                         checkIfComputersTurn();
-                    }, 500);
+                    }, 200);
                 }
             }
         });
-
-        return promise;
-
     }
 
     return {
