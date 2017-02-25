@@ -73,6 +73,7 @@ var simon = (function () {
             if (!verifyUserPlay()) {
                 console.log('invalid play');
                 stateMap.userPlayValid = false;
+                playSound(configMap.buttonSounds.get('fail'), 500);
                 return false;  //TODO: Play fail sound
             }
         }
@@ -205,11 +206,15 @@ var simon = (function () {
     }
     
     function initializeSounds () {
+        var buttonSound;
         jqueryMap.gameButtons.forEach(function ($button, buttonId) {
-            var buttonSound = document.createElement('audio');
+            buttonSound = document.createElement('audio');
             buttonSound.setAttribute('src', 'media/sound_' + buttonId + '.mp3');
             configMap.buttonSounds.set(buttonId, buttonSound);
         });
+        buttonSound = document.createElement('audio');
+        buttonSound.setAttribute('src', 'media/sound_fail.mp3');
+        configMap.buttonSounds.set('fail', buttonSound);
     }
 
     function playSequence() {
@@ -227,14 +232,8 @@ var simon = (function () {
                 jqueryMap.gameButtons.get('colorButton3')[0]
             ];
 
-        //for (currentTone = 0;currentTone <= stateMap.playNumber; currentTone++) {
-        //    playCurrentTone()
-        //    .then(function () {
-        //        return;
-        //    })
-        //}
         currentTone = 0;
-        playCurrentTone();
+        return playCurrentTone();
 
         function playCurrentTone () {
             setButtonColor(buttons[stateMap.gameSequence[currentTone]], true);
@@ -249,9 +248,6 @@ var simon = (function () {
             });
             return promise;
         }
-        //for ( currentTone = 0; currentTone <= playNumber; currentTone++ ) {
-        //    playSound(buttonSounds[stateMap.gameSequence[currentTone]], 500);
-        //}
     }
 
     function playSound(buttonSound, durationMs) {
@@ -312,10 +308,11 @@ var simon = (function () {
         stateMap.whoseTurn = COMPUTERS_TURN;
         stateMap.currentPlayerTone = -1;
 
-        playSequence();
-        stateMap.whoseTurn = PLAYERS_TURN;
-
-        waitForComputersTurn()
+        playSequence()
+        .then(function() {
+            stateMap.whoseTurn = PLAYERS_TURN;
+            return waitForComputersTurn()
+        })
         .then(function () {
             stateMap.playNumber++;
             stateMap.userSequence = [];
@@ -365,10 +362,10 @@ var simon = (function () {
         //return isUserCorrect;
     }
 
-    // waitForComputersTurn 
-    // returns a promise that resolves when the user has finished his turn or after user turn has timed out
-    function waitForComputersTurn () {
 
+    function waitForComputersTurn () {
+        // waitForComputersTurn 
+        // returns a promise that resolves when the user has finished his turn or after user turn has timed out
         var promise = new Promise(function (resolve, reject) {
             
             checkIfComputersTurn();
