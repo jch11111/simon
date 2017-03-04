@@ -361,9 +361,14 @@ var simon = (function () {
                     return;
                 }
                 if (!_wasPlayerTurnValid) {
-                    stateMap.isGameStarted = false;
-                    stateMap.score = 0;
-                    return;
+                    if (stateMap.isStrictMode) {
+                        stateMap.isGameStarted = false;
+                        stateMap.score = 0;
+                        return;
+                    }
+                    if (!stateMap.isStrictMode) {
+                        resetPlayScoreAndValidStateNonStrictMode();
+                    }
                 }
                 stateMap.score++;
                 stateMap.playNumber++;
@@ -373,6 +378,11 @@ var simon = (function () {
                     playSequenceAndWaitForUser();
                 }
             });
+        }
+        function resetPlayScoreAndValidStateNonStrictMode() {
+            stateMap.playNumber--;
+            stateMap.score--;
+            stateMap.userPlayValid = true; //user chose the wrong button but still valid in non-strict mode
         }
     }
 
