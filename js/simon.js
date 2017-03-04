@@ -123,7 +123,7 @@ var simon = (function () {
 
         stateMap.score = 0;
         displayScore();
-        startGame();
+        playGame();
     }
     //----------------------- END EVENT HANDLERS -----------------------
     function flashButton ($button) {
@@ -331,10 +331,8 @@ var simon = (function () {
 
     }
 
-    function startGame () {
+    function playGame () {
         stateMap.isGameRestarted = stateMap.isGameStarted;
-
-        console.log('isGameRestarted at top of startGame', stateMap.isGameRestarted);
 
         stateMap.userPlayValid = true;
         stateMap.playNumber = 0;
@@ -350,23 +348,24 @@ var simon = (function () {
         });
 
         function playSequenceAndWaitForUser () {
-            console.log('play sequence');
+            displayScore();
             playSequence()
             .then(function () {
                 stateMap.whoseTurn = PLAYERS_TURN;
                 return wasPlayerTurnValid()
             })
             .then(function (_wasPlayerTurnValid) {
-                console.log('_wasPlayerTurnValid', _wasPlayerTurnValid, 'isGameRestarted', stateMap.isGameRestarted);
                 if (stateMap.isGameRestarted) {
-                    console.log('setting game restarted false');
                     stateMap.isGameRestarted = false;
+                    stateMap.score = 0;
                     return;
                 }
                 if (!_wasPlayerTurnValid) {
-                    stateMap.isGameStarted = false
+                    stateMap.isGameStarted = false;
+                    stateMap.score = 0;
                     return;
                 }
+                stateMap.score++;
                 stateMap.playNumber++;
                 stateMap.userSequence = [];
                 stateMap.currentPlayerTone = -1;
