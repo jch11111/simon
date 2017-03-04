@@ -8,13 +8,22 @@
         var waitIsOver = false;
 
         $(function () {
-            $('#1').click(buttonClicked);
+            $('#1').click(function () {
+                waitIsOver = true;
+                wait()
+                .then(function () {
+                    console.log('wait over in button click');
+                    buttonClicked();
+                });
+            });
+        
             $('#2').click(function () {
                 waitIsOver = true;
             });
         });
 
         function buttonClicked () {
+            //waitIsOver = false;
             wait()
             .then(function () {
                 console.log('wait resolved and then invoked');

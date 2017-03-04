@@ -37,7 +37,8 @@ var simon = (function () {
             userSequence                : null,
             whoseTurn                   : null,
             userPlayValid               : true,
-            currentPlayerTone           : null
+            currentPlayerTone           : null,
+            isGameRestarted             : false
         };
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
     function displayScore () {
@@ -120,7 +121,6 @@ var simon = (function () {
     function handleStartButtonClick($startButton) {
         flashButton($startButton);
 
-        stateMap.isGameStarted = true;
         stateMap.score = 0;
         displayScore();
         startGame();
@@ -222,6 +222,23 @@ var simon = (function () {
         configMap.buttonSounds.set('fail', buttonSound);
     }
 
+    function pause (millisecondsToPause) {
+        return new Promise (function (resolve, reject) {
+            var begin = new Date();
+            pauser();
+            function pauser () {
+                if (new Date() - begin < millisecondsToPause) {
+                    setTimeout(function () {
+                        pauser();
+                    }, 100);
+                } else {
+                    resolve();
+                }
+            }
+        });
+
+    }
+
     function playFailSound () {
         playSound(configMap.buttonSounds.get('fail'), 500);
     }
@@ -312,24 +329,37 @@ var simon = (function () {
     }
 
     function startGame () {
-        console.log('start game');
+        stateMap.isGameRestarted = stateMap.isGameStarted;
+
+        console.log('isGameRestarted at top of startGame', stateMap.isGameRestarted);
+
         stateMap.userPlayValid = true;
         stateMap.playNumber = 0;
         stateMap.userSequence = [];
         generateGameSequence();
         stateMap.whoseTurn = COMPUTERS_TURN;
-        stateMap.currentPlayerTone = -1;
+        pause(400)
+        .then(function () {
+            stateMap.currentPlayerTone = -1;
+            stateMap.isGameStarted = true;
 
-        playSequenceAndWaitForUser();
+            playSequenceAndWaitForUser();
+        });
 
         function playSequenceAndWaitForUser () {
+            console.log('play sequence');
             playSequence()
             .then(function () {
                 stateMap.whoseTurn = PLAYERS_TURN;
                 return wasPlayerTurnValid()
             })
             .then(function (_wasPlayerTurnValid) {
-                console.log('_wasPlayerTurnValid', _wasPlayerTurnValid);
+                console.log('_wasPlayerTurnValid', _wasPlayerTurnValid, 'isGameRestarted', stateMap.isGameRestarted);
+                if (stateMap.isGameRestarted) {
+                    console.log('setting game restarted false');
+                    stateMap.isGameRestarted = false;
+                    return;
+                }
                 if (!_wasPlayerTurnValid) {
                     return;
                 }
