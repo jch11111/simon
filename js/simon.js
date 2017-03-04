@@ -244,7 +244,7 @@ var simon = (function () {
     }
 
     function playSequence() {
-        var currentTone,
+        var currentTone = 0,
             buttonSounds = [
                 configMap.buttonSounds.get('colorButton0'),
                 configMap.buttonSounds.get('colorButton1'),
@@ -258,21 +258,24 @@ var simon = (function () {
                 jqueryMap.gameButtons.get('colorButton3')[0]
             ];
 
-        currentTone = 0;
-        return playCurrentTone();
+        return pause(1000)
+               .then(function () {
+                   playCurrentTone();
+                });                
 
         function playCurrentTone () {
-            setButtonColor(buttons[stateMap.gameSequence[currentTone]], true);
-            var promise = playSound(buttonSounds[stateMap.gameSequence[currentTone]], 750)
-            .then(function () {
-                setButtonColor(buttons[stateMap.gameSequence[currentTone]], false);
-                console.log('currentTone', currentTone, 'playNumber', stateMap.playNumber);
-                if (++currentTone <= stateMap.playNumber) {
-                    setTimeout(function () {
-                        playCurrentTone();
-                    }, 150);
-                }
-            });
+            var promise = 
+                    setButtonColor(buttons[stateMap.gameSequence[currentTone]], true);
+                    playSound(buttonSounds[stateMap.gameSequence[currentTone]], 750)
+                    .then(function () {
+                        setButtonColor(buttons[stateMap.gameSequence[currentTone]], false);
+                        console.log('currentTone', currentTone, 'playNumber', stateMap.playNumber);
+                        if (++currentTone <= stateMap.playNumber) {
+                            setTimeout(function () {
+                                playCurrentTone();
+                            }, 150);
+                        }
+                    });
             return promise;
         }
     }

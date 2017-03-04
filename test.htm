@@ -10,10 +10,7 @@
         $(function () {
             $('#1').click(function () {
                 waitIsOver = true;
-                wait()
-                .then(function () {
-                    console.log('wait over in button click');
-                    buttonClicked();
+                buttonClicked();
                 });
             });
         
