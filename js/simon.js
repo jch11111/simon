@@ -361,6 +361,7 @@ var simon = (function () {
                     return;
                 }
                 if (!_wasPlayerTurnValid) {
+                    stateMap.isGameStarted = false
                     return;
                 }
                 stateMap.playNumber++;
