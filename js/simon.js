@@ -260,15 +260,19 @@ var simon = (function () {
 
         return pause(1000)
                .then(function () {
-                   playCurrentTone();
+                   return playCurrentTone();
                 });                
 
         function playCurrentTone () {
             var promise = 
-                    setButtonColor(buttons[stateMap.gameSequence[currentTone]], true);
-                    playSound(buttonSounds[stateMap.gameSequence[currentTone]], 750)
+                    setButtonColor(buttons[stateMap.gameSequence[currentTone]], true)
                     .then(function () {
-                        setButtonColor(buttons[stateMap.gameSequence[currentTone]], false);
+                        return playSound(buttonSounds[stateMap.gameSequence[currentTone]], 750)
+                    })
+                    .then(function () {
+                        return setButtonColor(buttons[stateMap.gameSequence[currentTone]], false)
+                    })
+                    .then(function () {
                         console.log('currentTone', currentTone, 'playNumber', stateMap.playNumber);
                         if (++currentTone <= stateMap.playNumber) {
                             setTimeout(function () {
@@ -276,6 +280,7 @@ var simon = (function () {
                             }, 150);
                         }
                     });
+
             return promise;
         }
     }
@@ -303,6 +308,7 @@ var simon = (function () {
     function setButtonColor ($button, isButtonOn) {
         var colorMap = isButtonOn ? configMap.buttonColorsLigtht : configMap.buttonColorsDark;
         $($button).css('fill', colorMap.get($button.id));
+        return Promise.resolve();
     }
 
     function setStateAndButtonColor ($button, isButtonOn) {
