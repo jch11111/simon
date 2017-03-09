@@ -3,6 +3,15 @@
 * Shell module
 */
 
+
+/*
+fix display of double digit scores
+prevent crazyness when pressing game buttons while in play
+todo: put sounds and buttons in arrays
+put sounds in separate module
+namespace the javascript and css - simon.game, simon.sound
+
+*/
 var simon = (function () {
     "use strict";
 
@@ -208,6 +217,7 @@ var simon = (function () {
         jqueryMap.controlButtons.set('onOffButton', $($gameImage).find('#onOffButton'));
 
         jqueryMap.scoreDisplay = $($gameImage).find('#scoreDisplay');
+        //jqueryMap.scoreDisplay.css('text-align', 'left');
     }
     
     function initializeSounds () {
