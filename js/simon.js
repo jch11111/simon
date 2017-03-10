@@ -69,11 +69,10 @@ var simon = (function () {
     }
 
     function handleGameButtonMouseDown() {
-        console.log('handleGameButtonMouseDown');
+        console.log('DOWWWWWWWWWWNNNNNN');
         var $button = this
-        console.log(stateMap.currentPlayerTone);
-        console.log(stateMap.whoseTurn);
         if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
+            console.log('bail out mouse down');
             return false;
         }
 
@@ -106,6 +105,7 @@ var simon = (function () {
         $($button).css('fill', configMap.buttonColorsDark.get($button.id));
         configMap.buttonSounds.get($button.id).pause();
         if (stateMap.userPlayValid & stateMap.currentPlayerTone === stateMap.playNumber) {
+            console.log('handleGameButtonMouseUp turn changed to computer\'s turn')
             stateMap.whoseTurn = COMPUTERS_TURN;
         }
         return false;
@@ -275,21 +275,28 @@ var simon = (function () {
 
         function playCurrentTone () {
             var promise = 
-                    setButtonColor(buttons[stateMap.gameSequence[currentTone]], true)
-                    .then(function () {
-                        return playSound(buttonSounds[stateMap.gameSequence[currentTone]], 750)
-                    })
-                    .then(function () {
-                        return setButtonColor(buttons[stateMap.gameSequence[currentTone]], false)
-                    })
-                    .then(function () {
-                        console.log('currentTone', currentTone, 'playNumber', stateMap.playNumber);
-                        if (++currentTone <= stateMap.playNumber) {
+                setButtonColor(buttons[stateMap.gameSequence[currentTone]], true)
+                .then(function () {
+                    return playSound(buttonSounds[stateMap.gameSequence[currentTone]], 750)
+                })
+                .then(function () {
+                    return setButtonColor(buttons[stateMap.gameSequence[currentTone]], false)
+                })
+                .then(function () {
+                    console.log('currentTone', currentTone, 'playNumber', stateMap.playNumber);
+                    if (++currentTone <= stateMap.playNumber) {
+                        return new Promise(function (resolve, reject) {
                             setTimeout(function () {
-                                playCurrentTone();
+                                playCurrentTone().
+                                then(function () {
+                                    resolve();    
+                                })
                             }, 150);
-                        }
-                    });
+                        });
+                    } else {
+                        return Promise.resolve();
+                    }
+                });
 
             return promise;
         }
@@ -355,6 +362,7 @@ var simon = (function () {
         stateMap.userSequence = [];
         generateGameSequence();
         stateMap.whoseTurn = COMPUTERS_TURN;
+        console.log('playGame turn set to computer');
         pause(400)
         .then(function () {
             stateMap.currentPlayerTone = -1;
@@ -368,9 +376,11 @@ var simon = (function () {
             playSequence()
             .then(function () {
                 stateMap.whoseTurn = PLAYERS_TURN;
+                console.log('playSequenceAndWaitForUser set to players turn');
                 return wasPlayerTurnValid()
             })
             .then(function (_wasPlayerTurnValid) {
+                console.log('_wasPlayerTurnValid in playSequenceAndWaitForUser', _wasPlayerTurnValid);
                 if (stateMap.isGameRestarted) {
                     stateMap.isGameRestarted = false;
                     stateMap.score = 0;
@@ -423,23 +433,9 @@ var simon = (function () {
     }
 
     function verifyUserPlay () {
-        //next: fix this - only works for first play
         var currentPlayerTone = stateMap.currentPlayerTone;
 
-        if (stateMap.userSequence[currentPlayerTone] !== stateMap.gameSequence[currentPlayerTone]) {
-            console.log('stateMap.userSequence', stateMap.userSequence);
-            console.log('stateMap.gameSequence', stateMap.gameSequence);
-            console.log('currentPlayerTone', currentPlayerTone);
-        }
-
         return stateMap.userSequence[currentPlayerTone] === stateMap.gameSequence[currentPlayerTone];
-        //stateMap.userSequence.forEach(function (buttonNumber, arrayIndex) {
-        //    if (stateMap.gameSequence[arrayIndex] != buttonNumber) {
-        //        isUserCorrect = false;
-        //    }
-        //});
-
-        //return isUserCorrect;
     }
 
 
