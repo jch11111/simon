@@ -5,8 +5,8 @@
 
 
 /*
-
 after a fail - 
+add tests
 todo: put sounds and buttons in arrays
 put sounds in separate module and name space the modules
 namespace the javascript and css - simon.game, simon.sound
@@ -38,6 +38,13 @@ var simon = (function () {
             controlButtons  : new Map(),
             scoreDisplay    : null
         },
+
+        // stateMap - current state of the game
+        //      whoseTurn       Is either COMPUTERS_TURN or PLAYERS_TURN. This will be COMPUTERS_TURN when:
+        //                          * Game started or restarted (playgame function)
+        //                          * User has successfully played all notes in the current sequence (handleGameButtonMouseUp function)
+        //                          * User played an incorrect note in the sequence in non strict mode (playGame function)
+        //                      
         stateMap = {
             gameSequence                : [],
             isGameOn                    : false,
@@ -74,11 +81,11 @@ var simon = (function () {
         var $button = this
         console.log('gameon', stateMap.isGameOn, 'whoseturn', stateMap.whoseTurn);
         if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
-            console.log('bail out mouse down');
             return false;
         }
 
         if (!stateMap.userPlayValid) {
+            console.log('playing fail for user', stateMap.whoseTurn);
             playFailSound();
             return;
         }
@@ -102,22 +109,21 @@ var simon = (function () {
     function handleGameButtonMouseUp() {
         var $button = this,
             numberOfNotesForUserToPlay = stateMap.playNumber;
+            
         if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
             return false;
         }
         $($button).css('fill', configMap.buttonColorsDark.get($button.id));
         configMap.buttonSounds.get($button.id).pause();
 
-        //If player's note was invalid, his turn is over. Set whose turn to computer. If not strict more, computer will replay the current sequence. By setting
-        // turn back to computer, we disable the player from pushing buttons until the computer finishes replaying the sequence.
-        //Also if player has played all notes (player turn = number of notes to play), then player has finished his turn,
-        //if (!stateMap.userPlayValid || stateMap.currentPlayerTone === numberOfNotesForUserToPlay) {
-        //    stateMap.whoseTurn = COMPUTERS_TURN;
-        //} 
-        if (stateMap.userPlayValid && stateMap.currentPlayerTone === numberOfNotesForUserToPlay) {
+        if (userPlayedSequenceSuccessfully()) {
             stateMap.whoseTurn = COMPUTERS_TURN;
         }
         return false;
+
+        function userPlayedSequenceSuccessfully() {
+            return stateMap.userPlayValid && stateMap.currentPlayerTone === numberOfNotesForUserToPlay;
+        }
     }
 
     function handleControlButtonClick () {
@@ -371,7 +377,6 @@ var simon = (function () {
         stateMap.userSequence = [];
         generateGameSequence();
         stateMap.whoseTurn = COMPUTERS_TURN;
-        console.log('playGame turn set to computer');
         pause(400)
         .then(function () {
             stateMap.currentPlayerTone = -1;
@@ -385,11 +390,9 @@ var simon = (function () {
             playSequence()
             .then(function () {
                 stateMap.whoseTurn = PLAYERS_TURN;
-                console.log('playSequenceAndWaitForUser set to players turn');
                 return wasPlayerTurnValid()
             })
             .then(function (_wasPlayerTurnValid) {
-                console.log('_wasPlayerTurnValid in playSequenceAndWaitForUser', _wasPlayerTurnValid);
                 if (stateMap.isGameRestarted) {
                     stateMap.isGameRestarted = false;
                     stateMap.score = 0;
@@ -400,9 +403,9 @@ var simon = (function () {
                         stateMap.isGameStarted = false;
                         stateMap.score = 0;
                         return;
-                    }
-                    if (!stateMap.isStrictMode) {
+                    } else {
                         resetPlayScoreAndValidStateNonStrictMode();
+                        stateMap.whoseTurn = COMPUTERS_TURN; //player failed so computers turn
                     }
                 }
                 stateMap.score++;
@@ -457,12 +460,12 @@ var simon = (function () {
             checkIfComputersTurn();
 
             function checkIfComputersTurn () {
+                //at this point in code, whoseTurn = COMPUTERS_TURN if and only if user played all notes correctly in the current sequence 
+                // in this case, whoseTurn would have been set to computer in handleGameButtonMouseUp
                 if (stateMap.whoseTurn === COMPUTERS_TURN) {
-                    _wasPlayerTurnValid = true;
-                    resolve(_wasPlayerTurnValid);
+                    resolve(_wasPlayerTurnValid = true);
                 } else if (!stateMap.userPlayValid) {
-                    _wasPlayerTurnValid = false;
-                    resolve(_wasPlayerTurnValid);
+                    resolve(_wasPlayerTurnValid = false);
                 } else {
                     setTimeout(function () {
                         checkIfComputersTurn();
