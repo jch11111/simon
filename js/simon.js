@@ -5,12 +5,14 @@
 
 
 /*
-fix display of double digit scores
-prevent crazyness when pressing game buttons while in play
-todo: put sounds and buttons in arrays
-put sounds in separate module
-namespace the javascript and css - simon.game, simon.sound
 
+after a fail - 
+todo: put sounds and buttons in arrays
+put sounds in separate module and name space the modules
+namespace the javascript and css - simon.game, simon.sound
+make sounds smaller
+clean up css
+add win celebration if user makes it to 20
 */
 var simon = (function () {
     "use strict";
@@ -69,8 +71,8 @@ var simon = (function () {
     }
 
     function handleGameButtonMouseDown() {
-        console.log('DOWWWWWWWWWWNNNNNN');
         var $button = this
+        console.log('gameon', stateMap.isGameOn, 'whoseturn', stateMap.whoseTurn);
         if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
             console.log('bail out mouse down');
             return false;
@@ -88,7 +90,7 @@ var simon = (function () {
                 console.log('invalid play');
                 stateMap.userPlayValid = false;
                 playFailSound();
-                return false;  //TODO: Play fail sound
+                return false;
             }
         }
 
@@ -98,14 +100,21 @@ var simon = (function () {
     }
 
     function handleGameButtonMouseUp() {
-        var $button = this;
-        if (!stateMap.isGameOn) {
+        var $button = this,
+            numberOfNotesForUserToPlay = stateMap.playNumber;
+        if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
             return false;
         }
         $($button).css('fill', configMap.buttonColorsDark.get($button.id));
         configMap.buttonSounds.get($button.id).pause();
-        if (stateMap.userPlayValid & stateMap.currentPlayerTone === stateMap.playNumber) {
-            console.log('handleGameButtonMouseUp turn changed to computer\'s turn')
+
+        //If player's note was invalid, his turn is over. Set whose turn to computer. If not strict more, computer will replay the current sequence. By setting
+        // turn back to computer, we disable the player from pushing buttons until the computer finishes replaying the sequence.
+        //Also if player has played all notes (player turn = number of notes to play), then player has finished his turn,
+        //if (!stateMap.userPlayValid || stateMap.currentPlayerTone === numberOfNotesForUserToPlay) {
+        //    stateMap.whoseTurn = COMPUTERS_TURN;
+        //} 
+        if (stateMap.userPlayValid && stateMap.currentPlayerTone === numberOfNotesForUserToPlay) {
             stateMap.whoseTurn = COMPUTERS_TURN;
         }
         return false;
