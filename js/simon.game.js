@@ -6,6 +6,8 @@
 
 /*
 turning off the game should kill the sequence if being played
+add Map to anything that is a map
+buttonColors light and dark should not be in configMap, just move these to buttonMap
 add tests
 put sounds in separate module and name space the modules
 namespace the javascript and css - simon.game, simon.sound
