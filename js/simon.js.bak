@@ -268,7 +268,8 @@ simon.game = (function () {
     }
 
     function playFailSound () {
-        playSound(configMap.buttonSounds.get('fail'), 500);
+        //playSound(configMap.buttonSounds.get('fail'), 500);
+        simon.sound.playSound('fail');
     }
 
     // playSequence

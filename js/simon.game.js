@@ -9,7 +9,6 @@ turning off the game should kill the sequence if being played
 add Map to anything that is a map
 buttonColors light and dark should not be in configMap, just move these to buttonMap
 add tests
-put sounds in separate module and name space the modules
 namespace the javascript and css - simon.game, simon.sound
 clean up css
 add win celebration if user makes it to 20
@@ -24,7 +23,6 @@ simon.game = (function () {
         configMap = {
             buttonColorsLigtht  : new Map(),
             buttonColorsDark    : new Map(),
-            buttonSounds        : new Map(),
             numberOfPlays       : 20,
             buttonIndex         : {
                 'colorButton0': 0,
@@ -102,7 +100,7 @@ simon.game = (function () {
         }
 
         $($button).css('fill', configMap.buttonColorsLigtht.get($button.id));
-        playSound(configMap.buttonSounds.get($button.id));
+        simon.sound.play($button.id)
         return false;
     }
 
@@ -114,7 +112,7 @@ simon.game = (function () {
             return false;
         }
         $($button).css('fill', configMap.buttonColorsDark.get($button.id));
-        configMap.buttonSounds.get($button.id).pause();
+        simon.sound.pause($button.id);
 
         if (userPlayedSequenceSuccessfully()) {
             stateMap.whoseTurn = COMPUTERS_TURN;
@@ -196,7 +194,6 @@ simon.game = (function () {
         $(window).load(function () {
             initializeJqueryMap();
             initializeConfigMap();
-            initializeSounds();
             setEventHandlers();
         })
     };
@@ -235,23 +232,6 @@ simon.game = (function () {
         //jqueryMap.scoreDisplay.css('text-align', 'left');
     }
     
-    function initializeSounds () {
-        var buttonSound;
-        //loop through the buttons. We will use the id of the button for 2 purposes:
-        //  (1) - the id will be part of the filename of the mp3 sound file. For example, for button with id = 'colorButton0', there
-        //    will be an mp3 file in location media/sound_colorButton0.mp3
-        //  (2) - the id of the button will be the key of the sound in configMap.buttonSound map. For example, for  button with id = 'colorButton0', there
-        //    will be a corresponding mp3 sound in configMap.buttonSound map with key = 'colorButton0'
-        jqueryMap.gameButtons.forEach(function ($button, buttonId) {
-            buttonSound = document.createElement('audio');
-            buttonSound.setAttribute('src', 'media/sound_' + buttonId + '.mp3');
-            configMap.buttonSounds.set(buttonId, buttonSound);
-        });
-        buttonSound = document.createElement('audio');
-        buttonSound.setAttribute('src', 'media/sound_fail.mp3');
-        configMap.buttonSounds.set('fail', buttonSound);
-    }
-
     function pause (millisecondsToPause) {
         return new Promise (function (resolve, reject) {
             var begin = new Date();
@@ -266,27 +246,17 @@ simon.game = (function () {
                 }
             }
         });
-
     }
 
     function playFailSound () {
-        playSound(configMap.buttonSounds.get('fail'), 500);
+        simon.sound.play('fail', 500);
     }
 
     // playSequence
     // Plays the current sequence of tones 
     function playSequence() {
         var currentTone = 0,
-            // buttonSounds is an array of sounds. The sequence of tones is an array of integers from 0 - 3. By putting the sounds (which are in a map)
-            //  into an array, we can easily look up the sound for any tone in the sequence because the tone number (0 - 3) will be the index in 
-            //  the array of sounds
-            buttonSounds = [
-                configMap.buttonSounds.get('colorButton0'),
-                configMap.buttonSounds.get('colorButton1'),
-                configMap.buttonSounds.get('colorButton2'),
-                configMap.buttonSounds.get('colorButton3')
-            ],
-            // also putting the buttins in the array so we can eaily look up a button. The tone number (0-3) is the index into the array
+            //  putting the buttons in the array so we can eaily look up a button. The tone number (0-3) is the index into the array
             buttons = [
                 jqueryMap.gameButtons.get('colorButton0')[0],
                 jqueryMap.gameButtons.get('colorButton1')[0],
@@ -296,24 +266,23 @@ simon.game = (function () {
 
         return pause(1000)
                .then(function () {
-                   return playCurrentTone();
+                   return playTonesInSequence();
                 });                
 
-        function playCurrentTone () {
+        function playTonesInSequence () {
             var promise = 
                 setButtonColor(buttons[stateMap.gameSequence[currentTone]], true)
                 .then(function () {
-                    return playSound(buttonSounds[stateMap.gameSequence[currentTone]], 750)
+                    return simon.sound.play(stateMap.gameSequence[currentTone], 750);
                 })
                 .then(function () {
                     return setButtonColor(buttons[stateMap.gameSequence[currentTone]], false)
                 })
                 .then(function () {
-                    console.log('currentTone', currentTone, 'playNumber', stateMap.playNumber);
                     if (++currentTone <= stateMap.playNumber) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
-                                playCurrentTone().
+                                playTonesInSequence().
                                 then(function () {
                                     resolve();    
                                 })
@@ -326,26 +295,6 @@ simon.game = (function () {
 
             return promise;
         }
-    }
-
-    function playSound(buttonSound, durationMs) {
-        var promise;
-
-        buttonSound.currentTime = 0;
-        buttonSound.play(),
-
-        promise = new Promise(function(resolve, reject) {
-            if (durationMs) {
-                setTimeout(function () {
-                    buttonSound.pause();
-                    resolve();
-                }, durationMs);
-            } else {
-                resolve();
-            }
-        });
-
-        return promise;
     }
 
     function setButtonColor ($button, isButtonOn) {
