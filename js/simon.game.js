@@ -5,6 +5,7 @@
 
 
 /*
+create a buttons module simon.buttons (api: light, dark, flash)
 turning off the game should kill the sequence if being played
 add Map to anything that is a map
 buttonColors light and dark should not be in configMap, just move these to buttonMap
@@ -218,18 +219,17 @@ simon.game = (function () {
     }
 
     function initializeJqueryMap() {
-        var $gameImage = jqueryMap.$gameImage = $(document.getElementById('gameImage').contentDocument);
-        jqueryMap.gameButtons.set('colorButton0', $($gameImage).find('#colorButton0'));
-        jqueryMap.gameButtons.set('colorButton1', $($gameImage).find('#colorButton1'));
-        jqueryMap.gameButtons.set('colorButton2', $($gameImage).find('#colorButton2'));
-        jqueryMap.gameButtons.set('colorButton3', $($gameImage).find('#colorButton3'));
+        var gameImage = jqueryMap.gameImage = $(document.getElementById('gameImage').contentDocument);
+        jqueryMap.gameButtons.set('colorButton0', $(gameImage).find('#colorButton0'));
+        jqueryMap.gameButtons.set('colorButton1', $(gameImage).find('#colorButton1'));
+        jqueryMap.gameButtons.set('colorButton2', $(gameImage).find('#colorButton2'));
+        jqueryMap.gameButtons.set('colorButton3', $(gameImage).find('#colorButton3'));
 
-        jqueryMap.controlButtons.set('startButton', $($gameImage).find('#startButton'));
-        jqueryMap.controlButtons.set('strictButton', $($gameImage).find('#strictButton'));
-        jqueryMap.controlButtons.set('onOffButton', $($gameImage).find('#onOffButton'));
+        jqueryMap.controlButtons.set('startButton', $(gameImage).find('#startButton'));
+        jqueryMap.controlButtons.set('strictButton', $(gameImage).find('#strictButton'));
+        jqueryMap.controlButtons.set('onOffButton', $(gameImage).find('#onOffButton'));
 
-        jqueryMap.scoreDisplay = $($gameImage).find('#scoreDisplay');
-        //jqueryMap.scoreDisplay.css('text-align', 'left');
+        jqueryMap.scoreDisplay = $(gameImage).find('#scoreDisplay');
     }
     
     function pause (millisecondsToPause) {
