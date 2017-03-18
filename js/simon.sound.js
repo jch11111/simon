@@ -93,5 +93,3 @@ simon.sound = (function () {
     };
 
 } ());
-
-simon.sound.init();

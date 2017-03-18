@@ -21,9 +21,22 @@ simon.buttons = (function () {
     // Purpose : fire 'handleColorButtonMouseDown' event that game module will handle
     // Arguments    : none
     // Returns      : false
+    // Triggers     : testo
     // Throws       : none
-    function handleColorButtonMouseDown () {
-        moduleObject.trigger(this);
+    function handleColorButtonMouseDown(e) {
+        e.preventDefault();
+        $(moduleObject).trigger({
+            type: 'colorButtonMouseDown',
+            button: this
+        });
+    }
+
+    // Begin private function handleColorButtonMouseUp
+    // Purpose : fire 'handleColorButtonMouseUp' event that game module will handle
+    // Arguments    : none
+    // Returns      : false
+    // Throws       : none
+    function handleColorButtonMouseUp() {
     }
 
     // Begin private function init
@@ -31,7 +44,7 @@ simon.buttons = (function () {
     // Arguments    : none
     // Returns      : false
     // Throws       : none
-    function init() {
+    function init(gameImage) {
         colorButtonsArray.push($(gameImage).find('#colorButton0'));
         colorButtonsArray.push($(gameImage).find('#colorButton1'));
         colorButtonsArray.push($(gameImage).find('#colorButton2'));
@@ -43,8 +56,8 @@ simon.buttons = (function () {
 
         colorButtonsArray.forEach(function ($button) {
             $button.bind('touchstart mousedown', handleColorButtonMouseDown);
-            $button.bind('touchend mouseup', handleColorButtonMouseUp);
-            $button.hover(handleButtonMouseOver, handleButtonMouseOut);
+            //$button.bind('touchend mouseup', handleColorButtonMouseUp);
+            //$button.hover(handleButtonMouseOver, handleButtonMouseOut);
         });
     }
     //----------------------- END PRIVATE FUNCTIONS -----------------------
@@ -52,4 +65,4 @@ simon.buttons = (function () {
     moduleObject.init = init;
     return moduleObject;
 
-}(gameImage, $));  //gameImage is the svg image passed in from game module (simon.game.js)
+}($));  //gameImage is the svg image passed in from game module (simon.game.js)

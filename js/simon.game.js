@@ -195,7 +195,14 @@ simon.game = (function () {
         $(window).load(function () {
             initializeJqueryMap();
             initializeConfigMap();
+            simon.sound.init();
+            simon.buttons.init(jqueryMap.gameImage);
             setEventHandlers();
+
+            $(simon.buttons).on('colorButtonMouseDown', function (e) {
+                var button = e.button;
+                console.log(button.id);
+            });
         })
     };
 
