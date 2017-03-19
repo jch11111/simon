@@ -78,7 +78,7 @@ simon.game = (function () {
 
     function handleGameButtonMouseDown() {
         var $button = this
-        console.log('gameon', stateMap.isGameOn, 'whoseturn', stateMap.whoseTurn);
+        //console.log('gameon', stateMap.isGameOn, 'whoseturn', stateMap.whoseTurn);
         if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
             return false;
         }
@@ -201,8 +201,21 @@ simon.game = (function () {
 
             $(simon.buttons).on('colorButtonMouseDown', function (e) {
                 var button = e.button;
-                console.log(button.id);
+                console.log('down', e.buttonNumber);
             });
+            $(simon.buttons).on('colorButtonMouseUp', function (e) {
+                var button = e.button;
+                console.log('up', e.buttonNumber);
+            });
+            $(simon.buttons).on('colorButtonMouseOver', function (e) {
+                var button = e.button;
+                console.log('over', e.buttonNumber);
+            });
+            $(simon.buttons).on('colorButtonMouseOut', function (e) {
+                var button = e.button;
+                console.log('out', e.buttonNumber);
+            });
+
         })
     };
 
