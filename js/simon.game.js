@@ -64,20 +64,20 @@ simon.game = (function () {
     }
 
     //----------------------- BEGIN EVENT HANDLERS -----------------------
-    function handleButtonMouseOver () {
-        var $button = this;
-        $($button).css('cursor', 'pointer');
+    function handleButtonMouseOver (e) {
+        var button = e.button;
+        $(button).css('cursor', 'pointer');
         return false;
     }
 
-    function handleButtonMouseOut() {
-        var $button = this;
-        $($button).css('cursor', 'default');
+    function handleButtonMouseOut(e) {
+        var button = e.button;
+        $(button).css('cursor', 'default');
         return false;
     }
 
-    function handleGameButtonMouseDown() {
-        var $button = this
+    function handleGameButtonMouseDown(e) {
+        var button = e.button;
         //console.log('gameon', stateMap.isGameOn, 'whoseturn', stateMap.whoseTurn);
         if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
             return false;
@@ -90,7 +90,7 @@ simon.game = (function () {
         }
 
         if (stateMap.whoseTurn === PLAYERS_TURN) {
-            stateMap.userSequence.push(configMap.buttonIndex[$button.id]);
+            stateMap.userSequence.push(configMap.buttonIndex[button.id]);
             stateMap.currentPlayerTone++;
             if (!verifyUserPlay()) {
                 console.log('invalid play');
@@ -100,20 +100,20 @@ simon.game = (function () {
             }
         }
 
-        $($button).css('fill', configMap.buttonColorsLigtht.get($button.id));
-        simon.sound.play($button.id)
+        $(button).css('fill', configMap.buttonColorsLigtht.get(button.id));
+        simon.sound.play(button.id)
         return false;
     }
 
-    function handleGameButtonMouseUp() {
-        var $button = this,
+    function handleGameButtonMouseUp(e) {
+        var button = e.button,
             numberOfNotesForUserToPlay = stateMap.playNumber;
             
         if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
             return false;
         }
-        $($button).css('fill', configMap.buttonColorsDark.get($button.id));
-        simon.sound.pause($button.id);
+        $(button).css('fill', configMap.buttonColorsDark.get(button.id));
+        simon.sound.pause(button.id);
 
         if (userPlayedSequenceSuccessfully()) {
             stateMap.whoseTurn = COMPUTERS_TURN;
@@ -199,22 +199,6 @@ simon.game = (function () {
             simon.buttons.init(jqueryMap.gameImage);
             setEventHandlers();
 
-            $(simon.buttons).on('colorButtonMouseDown', function (e) {
-                var button = e.button;
-                console.log('down', e.buttonNumber);
-            });
-            $(simon.buttons).on('colorButtonMouseUp', function (e) {
-                var button = e.button;
-                console.log('up', e.buttonNumber);
-            });
-            $(simon.buttons).on('colorButtonMouseOver', function (e) {
-                var button = e.button;
-                console.log('over', e.buttonNumber);
-            });
-            $(simon.buttons).on('colorButtonMouseOut', function (e) {
-                var button = e.button;
-                console.log('out', e.buttonNumber);
-            });
 
         })
     };
@@ -335,16 +319,34 @@ simon.game = (function () {
     }
 
     function setEventHandlers() {
-        jqueryMap.gameButtons.forEach(function ($button) {
-            $button.bind('touchstart mousedown', handleGameButtonMouseDown);
-            $button.bind('touchend mouseup', handleGameButtonMouseUp);
-            $button.hover(handleButtonMouseOver, handleButtonMouseOut);
+
+        $(simon.buttons).on('mousedown', function (e) {
+            handleGameButtonMouseDown(e);
+        });
+        $(simon.buttons).on('touchstart', function (e) {
+            handleGameButtonMouseDown(e);
+        });
+        $(simon.buttons).on('touchend', function (e) {
+            handleGameButtonMouseUp(e);
+        });
+        $(simon.buttons).on('mouseup', function (e) {
+            handleGameButtonMouseUp(e);
+        });
+        $(simon.buttons).on('mouseenter', function (e) {
+            handleButtonMouseOver(e);
+        });
+        $(simon.buttons).on('mouseleave', function (e) {
+            handleButtonMouseOut(e);
+        });
+
+
+        $(simon.buttons).on('click', function (e) {
+            var button = e.button;
+            console.log('click', e.buttonNumber);
         });
 
         jqueryMap.controlButtons.forEach(function ($button) {
             $button.bind('click touchstart', handleControlButtonClick);
-            //$button.bind('touchstart', function () { return false; });
-            $button.hover(handleButtonMouseOver, handleButtonMouseOut);
         });
 
     }

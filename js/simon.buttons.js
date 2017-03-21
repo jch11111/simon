@@ -15,10 +15,13 @@ simon.buttons = (function () {
         //buttonIdNumberMap - will map the button id to a button number from 0 - 4. The button numbers will be used in 
         //  simon.game module to determine which tone to play
         buttonIdNumberMap = {
-            'colorButton0': 0,
-            'colorButton1': 1,
-            'colorButton2': 2,
-            'colorButton3': 3
+            'colorButton0'  : 0,
+            'colorButton1'  : 1,
+            'colorButton2'  : 2,
+            'colorButton3'  : 3,
+            'onOffButton'   : 4,
+            'startButton'   : 5,
+            'strictButton'  : 6
 
         },
         //buttonColors provides the hex color codes for the button for light (button is lit up) and dark (button not lit up) states.
@@ -57,72 +60,21 @@ simon.buttons = (function () {
 
     //----------------------- BEGIN PRIVATE FUNCTIONS -----------------------
 
-    // Begin private function / handleColorButtonEvent /
+    // Begin private function / handleButtonEvent /
     // Purpose : trigger a custom event on this (simon.buttons) object. The simon.game module will listen for and respond to these events
     // Arguments    : 
     //                  * e - the event object
-    //                  * button - the button that raised the event
-    //                  * eventType - the type of event to trigger
     // Returns      : false
     // Triggers     : eventType that was passed in
     // Throws       : none
-    function handleColorButtonEvent(e, button, eventType) {
+    function handleButtonEvent(e) {
         e.preventDefault();
         $(moduleObject).trigger({
-            type: eventType,
-            button: button,
-            buttonNumber: buttonIdNumberMap[button.id]
+            type: e.type,
+            button: this,
+            buttonNumber: buttonIdNumberMap[this.id]
         });
         return false;
-    }
-
-    // Begin private function / handleColorButtonMouseDown /
-    // Purpose : triggers 'colorButtonMouseDown' event that game module will handle
-    // Arguments    : 
-    //                  * e - the event object
-    // Calls        : handleColorButtonEvent
-    // Returns      : false
-    // Triggers     : none
-    // Throws       : none
-    function handleColorButtonMouseDown(e) {
-        return handleColorButtonEvent(e, this, 'colorButtonMouseDown');
-    }
-
-    // Begin private function / handleColorButtonMouseOut /
-    // Purpose : triggers 'colorButtonMouseOut' event that game module will handle
-    // Arguments    : 
-    //                  * e - the event object
-    // Calls        : handleColorButtonEvent
-    // Returns      : false
-    // Triggers     : none
-    // Throws       : none
-    function handleColorButtonMouseOut(e) {
-        return handleColorButtonEvent(e, this, 'colorButtonMouseOut');
-    }
-
-
-    // Begin private function / handleColorButtonMouseOver /
-    // Purpose : triggers 'colorButtonMouseOver' event that game module will handle
-    // Arguments    : 
-    //                  * e - the event object
-    // Calls        : handleColorButtonEvent
-    // Returns      : false
-    // Triggers     : none
-    // Throws       : none
-    function handleColorButtonMouseOver(e) {
-        return handleColorButtonEvent(e, this, 'colorButtonMouseOver');
-    }
-
-    // Begin private function / handleColorButtonMouseUp /
-    // Purpose : triggers 'colorButtonMouseUp' event that game module will handle
-    // Arguments    : 
-    //                  * e - the event object
-    // Calls        : handleColorButtonEvent
-    // Returns      : false
-    // Triggers     : none
-    // Throws       : none
-    function handleColorButtonMouseUp(e) {
-        return handleColorButtonEvent(e, this, 'colorButtonMouseUp');
     }
 
     // Begin private function init
@@ -140,10 +92,12 @@ simon.buttons = (function () {
         controlButtonArray.push($(gameImage).find('#onOffButton'));
         controlButtonArray.push($(gameImage).find('#onOffButton'));
 
-        colorButtonsArray.forEach(function ($button) {
-            $button.bind('touchstart mousedown', handleColorButtonMouseDown);
-            $button.bind('touchend mouseup', handleColorButtonMouseUp);
-            $button.hover(handleColorButtonMouseOver, handleColorButtonMouseOut);
+        colorButtonsArray.forEach(function (button) {
+            button.bind('touchstart mousedown touchend mouseup mouseenter mouseleave', handleButtonEvent);
+        });
+
+        controlButtonArray.forEach(function (button) {
+            button.bind('click touchstart mouseenter mouseleave', handleButtonEvent);
         });
     }
 
@@ -160,12 +114,14 @@ simon.buttons = (function () {
     // Throws       : none
     function setButtonColor(button, isLit) {
         var buttonColor = buttonColors[button.id][(isLit ? 'light' : 'dark')];
-        $(button).css('fill', colorMap.get(button.id));
+        $(button).css('fill', buttonColor);
     }
 
     //----------------------- END PRIVATE FUNCTIONS -----------------------
 
     moduleObject.init = init;
+    moduleObject.setButtonColor = setButtonColor;
+
     return moduleObject;
 
-}($));  //gameImage is the svg image passed in from game module (simon.game.js)
+}($));
