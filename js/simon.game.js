@@ -22,8 +22,6 @@ simon.game = (function () {
         COMPUTERS_TURN  = { who: 'computer'},
         PLAYERS_TURN    = { who: 'player' },
         configMap = {
-            buttonColorsLigtht  : new Map(),
-            buttonColorsDark    : new Map(),
             numberOfPlays       : 20,
             buttonIndex         : {
                 'colorButton0': 0,
@@ -33,7 +31,6 @@ simon.game = (function () {
             }
         },
         jqueryMap = {
-            gameButtons     : new Map(),
             controlButtons  : new Map(),
             scoreDisplay    : null
         },
@@ -100,7 +97,7 @@ simon.game = (function () {
             }
         }
 
-        $(button).css('fill', configMap.buttonColorsLigtht.get(button.id));
+        simon.buttons.setButtonColor(button, true);
         simon.sound.play(button.id)
         return false;
     }
@@ -112,7 +109,7 @@ simon.game = (function () {
         if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
             return false;
         }
-        $(button).css('fill', configMap.buttonColorsDark.get(button.id));
+        simon.buttons.setButtonColor(button, false);
         simon.sound.pause(button.id);
 
         if (userPlayedSequenceSuccessfully()) {
@@ -125,17 +122,17 @@ simon.game = (function () {
         }
     }
 
-    function handleControlButtonClick () {
-        var $button = this;
-        switch ($button.id) {
+    function handleControlButtonClick (e) {
+        var button = e.button;
+        switch (button.id) {
             case 'startButton':
                 if (!stateMap.isGameOn) {
                     return false;
                 }
-                handleStartButtonClick($button);
+                handleStartButtonClick(button);
                 break;
             default:
-                toggleButtonAndState($button);
+                toggleButtonAndState(button);
                 break;
         }
         return false;
@@ -149,25 +146,22 @@ simon.game = (function () {
         playGame();
     }
     //----------------------- END EVENT HANDLERS -----------------------
-    function flashButton ($button) {
-        var buttonColorDark = configMap.buttonColorsDark.get($button.id),
-            buttonColorBright = configMap.buttonColorsLigtht.get($button.id),
-            flashCount = 10,
+    function flashButton (button) {
+        var flashCount = 10,
             flashDuration = 200;
 
-        $($button).css('fill', buttonColorBright);
+        simon.buttons.setButtonColor(button, true);
 
         setTimeout(flasher, flashDuration);
 
         function flasher() {
-            var buttonColor = flashCount % 2 ? buttonColorBright : buttonColorDark;
-            $($button).css('fill', buttonColor);
+            simon.buttons.setButtonColor(button, flashCount % 2);
             flashCount--;
 
             if (flashCount && stateMap.isGameOn) {
                 setTimeout(flasher, flashDuration);
             } else {
-                $($button).css('fill', buttonColorDark);
+                simon.buttons.setButtonColor(button, false);
             }
         }
     }
@@ -194,7 +188,6 @@ simon.game = (function () {
     function init() {
         $(window).load(function () {
             initializeJqueryMap();
-            initializeConfigMap();
             simon.sound.init();
             simon.buttons.init(jqueryMap.gameImage);
             setEventHandlers();
@@ -203,31 +196,8 @@ simon.game = (function () {
         })
     };
 
-    function initializeConfigMap () {
-        configMap.buttonColorsLigtht.set('colorButton0','#FFAAAA');
-        configMap.buttonColorsLigtht.set('colorButton1','#AAF5FF');
-        configMap.buttonColorsLigtht.set('colorButton2','#FFFFAA');
-        configMap.buttonColorsLigtht.set('colorButton3','#AAFFAA');
-        configMap.buttonColorsLigtht.set('startButton','#9696FF');
-        configMap.buttonColorsLigtht.set('strictButton','#44FF44');
-        configMap.buttonColorsLigtht.set('onOffButton', '#FF4444');
-
-        configMap.buttonColorsDark.set('colorButton0','#C80000');
-        configMap.buttonColorsDark.set('colorButton1','#00A0C8');
-        configMap.buttonColorsDark.set('colorButton2', '#C8C800');
-        configMap.buttonColorsDark.set('colorButton3','#00C800');
-        configMap.buttonColorsDark.set('startButton','#0000A0');
-        configMap.buttonColorsDark.set('strictButton','#00A000');
-        configMap.buttonColorsDark.set('onOffButton', '#A00000');
-
-    }
-
     function initializeJqueryMap() {
         var gameImage = jqueryMap.gameImage = $(document.getElementById('gameImage').contentDocument);
-        jqueryMap.gameButtons.set('colorButton0', $(gameImage).find('#colorButton0'));
-        jqueryMap.gameButtons.set('colorButton1', $(gameImage).find('#colorButton1'));
-        jqueryMap.gameButtons.set('colorButton2', $(gameImage).find('#colorButton2'));
-        jqueryMap.gameButtons.set('colorButton3', $(gameImage).find('#colorButton3'));
 
         jqueryMap.controlButtons.set('startButton', $(gameImage).find('#startButton'));
         jqueryMap.controlButtons.set('strictButton', $(gameImage).find('#strictButton'));
@@ -259,14 +229,7 @@ simon.game = (function () {
     // playSequence
     // Plays the current sequence of tones 
     function playSequence() {
-        var currentTone = 0,
-            //  putting the buttons in the array so we can eaily look up a button. The tone number (0-3) is the index into the array
-            buttons = [
-                jqueryMap.gameButtons.get('colorButton0')[0],
-                jqueryMap.gameButtons.get('colorButton1')[0],
-                jqueryMap.gameButtons.get('colorButton2')[0],
-                jqueryMap.gameButtons.get('colorButton3')[0]
-            ];
+        var currentTone = 0;
 
         return pause(1000)
                .then(function () {
@@ -274,36 +237,36 @@ simon.game = (function () {
                 });                
 
         function playTonesInSequence () {
-            var promise = 
-                setButtonColor(buttons[stateMap.gameSequence[currentTone]], true)
-                .then(function () {
-                    return simon.sound.play(stateMap.gameSequence[currentTone], 750);
-                })
-                .then(function () {
-                    return setButtonColor(buttons[stateMap.gameSequence[currentTone]], false)
-                })
-                .then(function () {
-                    if (++currentTone <= stateMap.playNumber) {
-                        return new Promise(function (resolve, reject) {
-                            setTimeout(function () {
-                                playTonesInSequence().
-                                then(function () {
-                                    resolve();    
-                                })
-                            }, 150);
-                        });
-                    } else {
-                        return Promise.resolve();
-                    }
-                });
+            var currentToneNumber = stateMap.gameSequence[currentTone],
+                promise = 
+                    simon.buttons.setButtonColor(currentToneNumber, true)
+                    .then(function () {
+                        return simon.sound.play(stateMap.gameSequence[currentTone], 750);
+                    })
+                    .then(function () {
+                        return simon.buttons.setButtonColor(currentToneNumber, false)
+                    })
+                    .then(function () {
+                        if (++currentTone <= stateMap.playNumber) {
+                            return new Promise(function (resolve, reject) {
+                                setTimeout(function () {
+                                    playTonesInSequence().
+                                    then(function () {
+                                        resolve();    
+                                    })
+                                }, 150);
+                            });
+                        } else {
+                            return Promise.resolve();
+                        }
+                    });
 
             return promise;
         }
     }
 
-    function setButtonColor ($button, isButtonOn) {
-        var colorMap = isButtonOn ? configMap.buttonColorsLigtht : configMap.buttonColorsDark;
-        $($button).css('fill', colorMap.get($button.id));
+    function setButtonColor (button, isButtonOn) {
+        simon.buttons.setButtonColor(button, isButtonOn);
         return Promise.resolve();
     }
 
@@ -324,7 +287,13 @@ simon.game = (function () {
             handleGameButtonMouseDown(e);
         });
         $(simon.buttons).on('touchstart', function (e) {
-            handleGameButtonMouseDown(e);
+            if (e.buttonNumber <= 3 ) {
+                //if button number <= 3, this is a color button
+                handleGameButtonMouseDown(e);
+            } else {
+                //if button number > 3, this is a control button
+                handleControlButtonClick(e);
+            }
         });
         $(simon.buttons).on('touchend', function (e) {
             handleGameButtonMouseUp(e);
@@ -339,14 +308,12 @@ simon.game = (function () {
             handleButtonMouseOut(e);
         });
 
-
         $(simon.buttons).on('click', function (e) {
-            var button = e.button;
-            console.log('click', e.buttonNumber);
+            handleControlButtonClick(e);
         });
 
         jqueryMap.controlButtons.forEach(function ($button) {
-            $button.bind('click touchstart', handleControlButtonClick);
+            //$button.bind('click touchstart', handleControlButtonClick);
         });
 
     }

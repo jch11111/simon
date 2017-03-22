@@ -90,7 +90,7 @@ simon.buttons = (function () {
 
         controlButtonArray.push($(gameImage).find('#startButton'));
         controlButtonArray.push($(gameImage).find('#onOffButton'));
-        controlButtonArray.push($(gameImage).find('#onOffButton'));
+        controlButtonArray.push($(gameImage).find('#strictButton'));
 
         colorButtonsArray.forEach(function (button) {
             button.bind('touchstart mousedown touchend mouseup mouseenter mouseleave', handleButtonEvent);
@@ -112,9 +112,21 @@ simon.buttons = (function () {
     // Returns      : false
     // Triggers     : none
     // Throws       : none
-    function setButtonColor(button, isLit) {
-        var buttonColor = buttonColors[button.id][(isLit ? 'light' : 'dark')];
+    function setButtonColor(buttonOrButtonNumber, isLit) {
+        var buttonColor,
+            button;
+
+        //is buttonOrButtonNumber the actual button or a button number?
+        if (!isNaN(buttonOrButtonNumber)) {
+            //button number was passed in instead of the actual button. 
+            button = colorButtonsArray[Number(buttonOrButtonNumber)][0];
+        } else {
+            button = buttonOrButtonNumber;
+        }
+        buttonColor = buttonColors[button.id][(isLit ? 'light' : 'dark')];
         $(button).css('fill', buttonColor);
+
+        return Promise.resolve();
     }
 
     //----------------------- END PRIVATE FUNCTIONS -----------------------
