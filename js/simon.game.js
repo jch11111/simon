@@ -340,6 +340,7 @@ simon.game = (function () {
                     return;
                 }
                 if (!_wasPlayerTurnValid) {
+                    //_wasPlayerTurnValid invalid either means user hit the wrong note OR player turned the game off
                     if (stateMap.isStrictMode || !stateMap.isGameOn) {
                         stateMap.isGameStarted = false;
                         stateMap.score = 0;
@@ -406,6 +407,7 @@ simon.game = (function () {
                 if (stateMap.whoseTurn === COMPUTERS_TURN) {
                     resolve(_wasPlayerTurnValid = true);
                 } else if (!stateMap.userPlayValid || !stateMap.isGameOn) {
+                    //if player turned of the game, resolve _wasPlayerTurnValid = false, this will effectively stop the game play in function playGame
                     resolve(_wasPlayerTurnValid = false);
                 } else {
                     setTimeout(function () {
