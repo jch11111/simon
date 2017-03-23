@@ -5,14 +5,14 @@
 
 
 /*
-create a buttons module simon.buttons (api: light, dark, flash)
 turning off the game should kill the sequence if being played
+restart should kill sequence being played
 add Map to anything that is a map
-buttonColors light and dark should not be in configMap, just move these to buttonMap
 add tests
 namespace the javascript and css - simon.game, simon.sound
 clean up css
 add win celebration if user makes it to 20
+add number of plays in game to url hash
 */
 simon.game = (function () {
     "use strict";
@@ -23,7 +23,7 @@ simon.game = (function () {
         PLAYERS_TURN    = { who: 'player' },
         configMap = {
             numberOfPlays       : 20,
-            buttonIndex         : {
+            buttonIdToNumberMap         : {
                 'colorButton0': 0,
                 'colorButton1': 1,
                 'colorButton2': 2,
@@ -31,8 +31,8 @@ simon.game = (function () {
             }
         },
         jqueryMap = {
-            controlButtons  : new Map(),
-            scoreDisplay    : null
+            gameImage       : null,     //gameImage is the svg image of the game
+            scoreDisplay    : null      //scoreDisplay is the UI element within the svg gameImage for displaying the score
         },
 
         // stateMap - current state of the game
@@ -87,7 +87,7 @@ simon.game = (function () {
         }
 
         if (stateMap.whoseTurn === PLAYERS_TURN) {
-            stateMap.userSequence.push(configMap.buttonIndex[button.id]);
+            stateMap.userSequence.push(configMap.buttonIdToNumberMap[button.id]);
             stateMap.currentPlayerTone++;
             if (!verifyUserPlay()) {
                 console.log('invalid play');
@@ -138,8 +138,8 @@ simon.game = (function () {
         return false;
     }
 
-    function handleStartButtonClick($startButton) {
-        flashButton($startButton);
+    function handleStartButtonClick(startButton) {
+        flashButton(startButton);
 
         stateMap.score = 0;
         displayScore();
@@ -191,17 +191,11 @@ simon.game = (function () {
             simon.sound.init();
             simon.buttons.init(jqueryMap.gameImage);
             setEventHandlers();
-
-
         })
     };
 
     function initializeJqueryMap() {
         var gameImage = jqueryMap.gameImage = $(document.getElementById('gameImage').contentDocument);
-
-        jqueryMap.controlButtons.set('startButton', $(gameImage).find('#startButton'));
-        jqueryMap.controlButtons.set('strictButton', $(gameImage).find('#strictButton'));
-        jqueryMap.controlButtons.set('onOffButton', $(gameImage).find('#onOffButton'));
 
         jqueryMap.scoreDisplay = $(gameImage).find('#scoreDisplay');
     }
@@ -247,7 +241,7 @@ simon.game = (function () {
                         return simon.buttons.setButtonColor(currentToneNumber, false)
                     })
                     .then(function () {
-                        if (++currentTone <= stateMap.playNumber) {
+                        if (++currentTone <= stateMap.playNumber && stateMap.isGameOn) {
                             return new Promise(function (resolve, reject) {
                                 setTimeout(function () {
                                     playTonesInSequence().
@@ -270,15 +264,15 @@ simon.game = (function () {
         return Promise.resolve();
     }
 
-    function setStateAndButtonColor ($button, isButtonOn) {
-        var stateMapProperty = $button.id === 'strictButton' ? 'isStrictMode' 
-            : $button.id === 'onOffButton' ? 'isGameOn' : null;
+    function setStateAndButtonColor (button, isButtonOn) {
+        var stateMapProperty = button.id === 'strictButton' ? 'isStrictMode' 
+            : button.id === 'onOffButton' ? 'isGameOn' : null;
 
         if (stateMapProperty) {
             stateMap[stateMapProperty] = isButtonOn;
         }
 
-        setButtonColor($button, isButtonOn);
+        setButtonColor(button, isButtonOn);
     }
 
     function setEventHandlers() {
@@ -286,6 +280,7 @@ simon.game = (function () {
         $(simon.buttons).on('mousedown', function (e) {
             handleGameButtonMouseDown(e);
         });
+
         $(simon.buttons).on('touchstart', function (e) {
             if (e.buttonNumber <= 3 ) {
                 //if button number <= 3, this is a color button
@@ -311,11 +306,6 @@ simon.game = (function () {
         $(simon.buttons).on('click', function (e) {
             handleControlButtonClick(e);
         });
-
-        jqueryMap.controlButtons.forEach(function ($button) {
-            //$button.bind('click touchstart', handleControlButtonClick);
-        });
-
     }
 
     function playGame () {
@@ -373,20 +363,21 @@ simon.game = (function () {
         }
     }
 
-    function toggleButtonAndState($button) {
+    function toggleButtonAndState(button) {
         //TODO: too much button complexity here - separate button module with clean API
-        var isOnOffButton = $button.id === 'onOffButton',
+        var isOnOffButton = button.id === 'onOffButton',
             isButtonOn = isOnOffButton ? stateMap.isGameOn : stateMap.isStrictMode,
-            isButtonGoingOff = isButtonOn;
+            isButtonGoingOff = isButtonOn,
+            isGameOffAndPlayerPressedRestartOrStrict = !stateMap.isGameOn && !isOnOffButton;
 
-        if (!stateMap.isGameOn && !isOnOffButton)  {
+        if (isGameOffAndPlayerPressedRestartOrStrict) {
             return false;
         }
 
-        setStateAndButtonColor($button, !isButtonOn);
+        setStateAndButtonColor(button, !isButtonOn);
 
         if (isOnOffButton && isButtonGoingOff) {
-            setStateAndButtonColor(jqueryMap.controlButtons.get('strictButton')[0], false);
+            setStateAndButtonColor(simon.buttons.getButton('strictButton'), false);
             stateMap.score = '';
             stateMap.isGameStarted = false;
             displayScore();
@@ -395,7 +386,6 @@ simon.game = (function () {
 
     function verifyUserPlay () {
         var currentPlayerTone = stateMap.currentPlayerTone;
-
         return stateMap.userSequence[currentPlayerTone] === stateMap.gameSequence[currentPlayerTone];
     }
 

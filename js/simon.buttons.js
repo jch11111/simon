@@ -8,9 +8,8 @@ simon.buttons = (function () {
 
     //----------------------- BEGIN MODULE SCOPE VARIABLES -----------------------
     //color buttons are the 4 colored buttons the player uses to play the sequence
-    var colorButtonsArray = [],
+    var buttonsArray = [],
     //control buttons include the on/off button, the restart button and the strict mode button
-        controlButtonArray = [],
         moduleObject = {},
         //buttonIdNumberMap - will map the button id to a button number from 0 - 4. The button numbers will be used in 
         //  simon.game module to determine which tone to play
@@ -60,6 +59,21 @@ simon.buttons = (function () {
 
     //----------------------- BEGIN PRIVATE FUNCTIONS -----------------------
 
+    // Begin private function / getButton /
+    // Purpose : returns a button
+    // Arguments    : 
+    //                  * buttonId - the id of the button to get
+    // Returns      : The requested button or false if no button exists with requested id
+    // Triggers     : none
+    // Throws       : none
+    function getButton (buttonId) {
+        var buttonIndex = buttonIdNumberMap[buttonId];
+
+        return buttonIndex &&
+               buttonIndex < buttonsArray.length &&
+               buttonsArray[buttonIndex][0];
+    }
+
     // Begin private function / handleButtonEvent /
     // Purpose : trigger a custom event on this (simon.buttons) object. The simon.game module will listen for and respond to these events
     // Arguments    : 
@@ -83,21 +97,23 @@ simon.buttons = (function () {
     // Returns      : false
     // Throws       : none
     function init(gameImage) {
-        colorButtonsArray.push($(gameImage).find('#colorButton0'));
-        colorButtonsArray.push($(gameImage).find('#colorButton1'));
-        colorButtonsArray.push($(gameImage).find('#colorButton2'));
-        colorButtonsArray.push($(gameImage).find('#colorButton3'));
+        buttonsArray.push($(gameImage).find('#colorButton0'));
+        buttonsArray.push($(gameImage).find('#colorButton1'));
+        buttonsArray.push($(gameImage).find('#colorButton2'));
+        buttonsArray.push($(gameImage).find('#colorButton3'));
 
-        controlButtonArray.push($(gameImage).find('#startButton'));
-        controlButtonArray.push($(gameImage).find('#onOffButton'));
-        controlButtonArray.push($(gameImage).find('#strictButton'));
+        buttonsArray.push($(gameImage).find('#startButton'));
+        buttonsArray.push($(gameImage).find('#onOffButton'));
+        buttonsArray.push($(gameImage).find('#strictButton'));
 
-        colorButtonsArray.forEach(function (button) {
-            button.bind('touchstart mousedown touchend mouseup mouseenter mouseleave', handleButtonEvent);
-        });
-
-        controlButtonArray.forEach(function (button) {
-            button.bind('click touchstart mouseenter mouseleave', handleButtonEvent);
+        buttonsArray.forEach(function (button, buttonNumber) {
+            if (buttonNumber < 4) {
+                //button numbers < 4 are the 4 color buttons
+                button.bind('touchstart mousedown touchend mouseup mouseenter mouseleave', handleButtonEvent);
+            } else {
+                //button numbers >= 4 are control buttons
+                button.bind('click touchstart mouseenter mouseleave', handleButtonEvent);
+            }
         });
     }
 
@@ -119,7 +135,7 @@ simon.buttons = (function () {
         //is buttonOrButtonNumber the actual button or a button number?
         if (!isNaN(buttonOrButtonNumber)) {
             //button number was passed in instead of the actual button. 
-            button = colorButtonsArray[Number(buttonOrButtonNumber)][0];
+            button = buttonsArray[Number(buttonOrButtonNumber)][0];
         } else {
             button = buttonOrButtonNumber;
         }
@@ -131,6 +147,8 @@ simon.buttons = (function () {
 
     //----------------------- END PRIVATE FUNCTIONS -----------------------
 
+    //Add public API to module object
+    moduleObject.getButton = getButton;
     moduleObject.init = init;
     moduleObject.setButtonColor = setButtonColor;
 
