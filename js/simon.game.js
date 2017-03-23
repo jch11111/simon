@@ -231,14 +231,16 @@ simon.game = (function () {
                 });                
 
         function playTonesInSequence () {
-            var currentToneNumber = stateMap.gameSequence[currentTone],
+            //currentToneNoteNumber is a number from 0 to 3. This represents which of the 4 notes corresponding to the 4 color buttons to play for the current
+            // tone in the sequence
+            var currentToneNoteNumber = stateMap.gameSequence[currentTone],
                 promise = 
-                    simon.buttons.setButtonColor(currentToneNumber, true)
+                    simon.buttons.setButtonColor(currentToneNoteNumber, true)
                     .then(function () {
                         return simon.sound.play(stateMap.gameSequence[currentTone], 750);
                     })
                     .then(function () {
-                        return simon.buttons.setButtonColor(currentToneNumber, false)
+                        return simon.buttons.setButtonColor(currentToneNoteNumber, false)
                     })
                     .then(function () {
                         if (++currentTone <= stateMap.playNumber && stateMap.isGameOn) {
@@ -338,7 +340,7 @@ simon.game = (function () {
                     return;
                 }
                 if (!_wasPlayerTurnValid) {
-                    if (stateMap.isStrictMode) {
+                    if (stateMap.isStrictMode || !stateMap.isGameOn) {
                         stateMap.isGameStarted = false;
                         stateMap.score = 0;
                         return;
@@ -396,18 +398,18 @@ simon.game = (function () {
         var _wasPlayerTurnValid;
         return new Promise(function (resolve, reject) {
             
-            checkIfComputersTurn();
+            checkIfComputersTurnAndGameOn();
 
-            function checkIfComputersTurn () {
+            function checkIfComputersTurnAndGameOn () {
                 //at this point in code, whoseTurn = COMPUTERS_TURN if and only if user played all notes correctly in the current sequence 
                 // in this case, whoseTurn would have been set to computer in handleGameButtonMouseUp
                 if (stateMap.whoseTurn === COMPUTERS_TURN) {
                     resolve(_wasPlayerTurnValid = true);
-                } else if (!stateMap.userPlayValid) {
+                } else if (!stateMap.userPlayValid || !stateMap.isGameOn) {
                     resolve(_wasPlayerTurnValid = false);
                 } else {
                     setTimeout(function () {
-                        checkIfComputersTurn();
+                        checkIfComputersTurnAndGameOn();
                     }, 200);
                 }
             }
