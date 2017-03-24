@@ -43,7 +43,15 @@ simon.game = (function () {
         //                      
         stateMap = {
             gameSequence                : [],
+            
+            //isGameOn means the on/off button is on.
+            //isGameOn is set in toggleButtonStateAndColor function (via call to setButtonStateAndColor)
             isGameOn                    : false,
+
+            //isGameStarted means the game is on (on/off button is on) and the start button has been pressed (set in playGame function)
+            //isGameStarted is set to false if
+            //  user hit the wrong note in strict mode or the game was turned off (set to false in playGame function)
+            
             isGameStarted               : false,
             isStrictMode                : false,
             playNumber                  : null,
@@ -57,17 +65,19 @@ simon.game = (function () {
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
     function displayScore () {
         jqueryMap.scoreDisplay.text(stateMap.score);
-        console.log(stateMap.score);
+        console.log('score', stateMap.score);
     }
 
     //----------------------- BEGIN EVENT HANDLERS -----------------------
     function handleButtonMouseOver (e) {
+        //this handles mouse over for both game buttons (the 4 color buttons) as well as control buttons (on/off, restart, strict)
         var button = e.button;
         $(button).css('cursor', 'pointer');
         return false;
     }
 
     function handleButtonMouseOut(e) {
+        //this handles mouse over for both game buttons (the 4 color buttons) as well as control buttons (on/off, restart, strict)
         var button = e.button;
         $(button).css('cursor', 'default');
         return false;
@@ -75,13 +85,11 @@ simon.game = (function () {
 
     function handleGameButtonMouseDown(e) {
         var button = e.button;
-        //console.log('gameon', stateMap.isGameOn, 'whoseturn', stateMap.whoseTurn);
         if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
             return false;
         }
 
         if (!stateMap.userPlayValid) {
-            console.log('playing fail for user', stateMap.whoseTurn);
             playFailSound();
             return;
         }
@@ -90,7 +98,6 @@ simon.game = (function () {
             stateMap.userSequence.push(configMap.buttonIdToNumberMap[button.id]);
             stateMap.currentPlayerTone++;
             if (!verifyUserPlay()) {
-                console.log('invalid play');
                 stateMap.userPlayValid = false;
                 playFailSound();
                 return false;
@@ -132,7 +139,7 @@ simon.game = (function () {
                 handleStartButtonClick(button);
                 break;
             default:
-                toggleButtonAndState(button);
+                toggleButtonStateAndColor(button);
                 break;
         }
         return false;
@@ -176,7 +183,6 @@ simon.game = (function () {
         }
 
         shuffleSequence();
-        console.log(stateMap.gameSequence);
 
         function shuffleSequence() {
             stateMap.gameSequence.sort(function (a, b) {
@@ -243,6 +249,9 @@ simon.game = (function () {
                         return simon.buttons.setButtonColor(currentToneNoteNumber, false)
                     })
                     .then(function () {
+                        //if currently playing tones in sequence and user hits start button, stateMap.playNumber will be set to 0
+                        // meaning the next line will be false because currentTone will NOT be < 0 (stateMap.playNumber set to 0 when start button was hit)
+                        // this is why the sequence stops when you hit the start button
                         if (++currentTone <= stateMap.playNumber && stateMap.isGameOn) {
                             return new Promise(function (resolve, reject) {
                                 setTimeout(function () {
@@ -253,6 +262,7 @@ simon.game = (function () {
                                 }, 150);
                             });
                         } else {
+                            console.log('sequence done - currentTone=', currentTone, ' playNumber = ', stateMap.playNumber);
                             return Promise.resolve();
                         }
                     });
@@ -266,7 +276,7 @@ simon.game = (function () {
         return Promise.resolve();
     }
 
-    function setStateAndButtonColor (button, isButtonOn) {
+    function setButtonStateAndColor (button, isButtonOn) {
         var stateMapProperty = button.id === 'strictButton' ? 'isStrictMode' 
             : button.id === 'onOffButton' ? 'isGameOn' : null;
 
@@ -311,18 +321,28 @@ simon.game = (function () {
     }
 
     function playGame () {
+        //when game is first started, both isGameStarted and isGameRestarted are false after exection of this line (stateMap.isGameRestarted = stateMap.isGameStarted;)
         stateMap.isGameRestarted = stateMap.isGameStarted;
 
+        //now setting isGameStarted to true and will remain always true unless user hits a bad note in strict mode or turns off game
+        // assuming user doesn't hit bad note in strict mode and doesn't turn game off but DOES hit the start button, then isGameRestarted will be 
+        // set to isGameStarted which is TRUE. This is the ONLY way isGameRestarted is set to true.
+        // In this case, it is set to true only until the existing _wasPlayerTurnValid resolves
+        stateMap.isGameStarted = true;
+
         stateMap.userPlayValid = true;
+        
+        //statMap.playNumber = 0 because we are starting a game. Also, if user hits start in the midst of a game while an exiting sequence is being played,
+        // the fact that playNumber is reset to 0 will call the promise in playSequence in immediately resolve because the currentTone will suddenly be >
+        // than the play number. See playTonesInSequence function nested within playSequence function
         stateMap.playNumber = 0;
+
         stateMap.userSequence = [];
         generateGameSequence();
         stateMap.whoseTurn = COMPUTERS_TURN;
         pause(400)
         .then(function () {
             stateMap.currentPlayerTone = -1;
-            stateMap.isGameStarted = true;
-
             playSequenceAndWaitForUser();
         });
 
@@ -366,7 +386,7 @@ simon.game = (function () {
         }
     }
 
-    function toggleButtonAndState(button) {
+    function toggleButtonStateAndColor(button) {
         //TODO: too much button complexity here - separate button module with clean API
         var isOnOffButton = button.id === 'onOffButton',
             isButtonOn = isOnOffButton ? stateMap.isGameOn : stateMap.isStrictMode,
@@ -377,12 +397,12 @@ simon.game = (function () {
             return false;
         }
 
-        setStateAndButtonColor(button, !isButtonOn);
+        setButtonStateAndColor(button, !isButtonOn);
 
         if (isOnOffButton && isButtonGoingOff) {
-            setStateAndButtonColor(simon.buttons.getButton('strictButton'), false);
+            setButtonStateAndColor(simon.buttons.getButton('strictButton'), false);
             stateMap.score = '';
-            stateMap.isGameStarted = false;
+            //stateMap.isGameStarted = false; not required since 
             displayScore();
         }
     }
