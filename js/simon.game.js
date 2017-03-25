@@ -55,13 +55,16 @@ simon.game = (function () {
             isGameStarted               : false,
             isStrictMode                : false,
             playNumber                  : null,
+
+            //score is incremented in playGame only
             score                       : 0,
             userSequence                : null,
             whoseTurn                   : null,
             userPlayValid               : true,
             currentPlayerTone           : null,
             isGameRestarted             : false
-        };
+        },
+        startGameTimeoutId;
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
     function displayScore () {
         jqueryMap.scoreDisplay.text(stateMap.score);
@@ -150,7 +153,14 @@ simon.game = (function () {
 
         stateMap.score = 0;
         displayScore();
-        playGame();
+
+        //clearing then resetting a timeout to prevent multiple games from being fired off if the user clicks the start button repeatedly
+        if (startGameTimeoutId) {
+            clearTimeout(startGameTimeoutId);
+        }
+        startGameTimeoutId = setTimeout(function () {
+            playGame();
+        }, 500);
     }
     //----------------------- END EVENT HANDLERS -----------------------
     function flashButton (button) {
