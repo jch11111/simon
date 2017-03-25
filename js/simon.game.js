@@ -65,12 +65,12 @@ simon.game = (function () {
             userPlayValid               : true,
             currentPlayerTone           : null,
             isGameRestarted             : false
+            //playSequencePromises        : []
         },
-        startGameTimeoutId;
+        startGameTimeoutId
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
     function displayScore () {
         jqueryMap.scoreDisplay.text(stateMap.score);
-        console.log('score', stateMap.score);
     }
 
     //----------------------- BEGIN EVENT HANDLERS -----------------------
@@ -238,6 +238,81 @@ simon.game = (function () {
         simon.sound.play('fail', 500);
     }
 
+    function playGame() {
+        //when game is first started, both isGameStarted and isGameRestarted are false after exection of this line (stateMap.isGameRestarted = stateMap.isGameStarted;)
+        stateMap.isGameRestarted = stateMap.isGameStarted;
+
+        //now setting isGameStarted to true and will remain always true unless user hits a bad tone in strict mode or turns off game
+        // assuming user doesn't hit bad tone in strict mode and doesn't turn game off but DOES hit the start button, then isGameRestarted will be 
+        // set to isGameStarted which is TRUE. This is the ONLY way isGameRestarted is set to true.
+        // In this case, it is set to true only until the existing _wasPlayerTurnValid resolves
+        stateMap.isGameStarted = true;
+
+        stateMap.userPlayValid = true;
+
+        //statMap.playNumber = 0 because we are starting a game. Also, if user hits start in the midst of a game while an exiting sequence is being played,
+        // the fact that playNumber is reset to 0 will call the promise in playSequence in immediately resolve because the currentTone will suddenly be >
+        // than the play number. See playTonesInSequence function nested within playSequence function
+        stateMap.playNumber = 0;
+
+        stateMap.userSequence = [];
+        generateGameSequence();
+        stateMap.whoseTurn = COMPUTERS_TURN;
+
+        //stateMap.playSequencePromises.forEach(function (promise) {
+        //    promise._reject('game restarted');
+        //})
+
+        pause(400)
+        .then(function () {
+            stateMap.currentPlayerTone = -1;
+            playSequenceAndWaitForUser();
+        });
+
+        function playSequenceAndWaitForUser() {
+            displayScore();
+            var playSequencePromises = playSequence()
+            .then(function () {
+                stateMap.whoseTurn = PLAYERS_TURN;
+                return wasPlayerTurnValid()
+            })
+            .then(function (_wasPlayerTurnValid) {
+                console.log('stateMap.isGameRestarted', stateMap.isGameRestarted);
+                if (stateMap.isGameRestarted) {
+                    stateMap.isGameRestarted = false;
+                    stateMap.score = 0;
+                    console.log('GAME RESTARTED!!!!!!!!');
+                    return;
+                }
+                if (!_wasPlayerTurnValid) {
+                    //_wasPlayerTurnValid invalid either means user hit the wrong tone OR player turned the game off
+                    if (stateMap.isStrictMode || !stateMap.isGameOn) {
+                        stateMap.isGameStarted = false;
+                        stateMap.score = 0;
+                        return;
+                    } else {
+                        resetPlayScoreAndValidStateNonStrictMode();
+                        stateMap.whoseTurn = COMPUTERS_TURN; //player failed so computers turn
+                    }
+                }
+                stateMap.score++;
+                console.log('score', stateMap.score);
+                stateMap.playNumber++;
+                stateMap.userSequence = [];
+                stateMap.currentPlayerTone = -1;
+                if (stateMap.playNumber <= configMap.numberOfPlays) {
+                    playSequenceAndWaitForUser();
+                }
+            });
+            //stateMap.playSequencePromises.push(playSequencePromises);
+        }
+        function resetPlayScoreAndValidStateNonStrictMode() {
+            stateMap.playNumber--;
+            stateMap.score--;
+            stateMap.userPlayValid = true; //user chose the wrong button but still valid in non-strict mode
+        }
+    }
+
     // playSequence
     // Plays the current sequence of tones 
     function playSequence() {
@@ -265,6 +340,7 @@ simon.game = (function () {
                         // meaning the next line will be false because currentTone will NOT be < 0 (stateMap.playNumber set to 0 when start button was hit)
                         // this is why the sequence stops when you hit the start button
                         if (++currentTone <= stateMap.playNumber && stateMap.isGameOn) {
+                            //console.log('NEXT TONE NEXT TONE currentTone++ = ', currentTone + 1, 'stateMap.playNumber', stateMap.playNumber);
                             return new Promise(function (resolve, reject) {
                                 setTimeout(function () {
                                     playTonesInSequence().
@@ -274,7 +350,6 @@ simon.game = (function () {
                                 }, 150);
                             });
                         } else {
-                            console.log('sequence done - currentTone=', currentTone, ' playNumber = ', stateMap.playNumber);
                             return Promise.resolve();
                         }
                     });
@@ -332,72 +407,6 @@ simon.game = (function () {
         });
     }
 
-    function playGame () {
-        //when game is first started, both isGameStarted and isGameRestarted are false after exection of this line (stateMap.isGameRestarted = stateMap.isGameStarted;)
-        stateMap.isGameRestarted = stateMap.isGameStarted;
-
-        //now setting isGameStarted to true and will remain always true unless user hits a bad tone in strict mode or turns off game
-        // assuming user doesn't hit bad tone in strict mode and doesn't turn game off but DOES hit the start button, then isGameRestarted will be 
-        // set to isGameStarted which is TRUE. This is the ONLY way isGameRestarted is set to true.
-        // In this case, it is set to true only until the existing _wasPlayerTurnValid resolves
-        stateMap.isGameStarted = true;
-
-        stateMap.userPlayValid = true;
-        
-        //statMap.playNumber = 0 because we are starting a game. Also, if user hits start in the midst of a game while an exiting sequence is being played,
-        // the fact that playNumber is reset to 0 will call the promise in playSequence in immediately resolve because the currentTone will suddenly be >
-        // than the play number. See playTonesInSequence function nested within playSequence function
-        stateMap.playNumber = 0;
-
-        stateMap.userSequence = [];
-        generateGameSequence();
-        stateMap.whoseTurn = COMPUTERS_TURN;
-        pause(400)
-        .then(function () {
-            stateMap.currentPlayerTone = -1;
-            playSequenceAndWaitForUser();
-        });
-
-        function playSequenceAndWaitForUser () {
-            displayScore();
-            playSequence()
-            .then(function () {
-                stateMap.whoseTurn = PLAYERS_TURN;
-                return wasPlayerTurnValid()
-            })
-            .then(function (_wasPlayerTurnValid) {
-                if (stateMap.isGameRestarted) {
-                    stateMap.isGameRestarted = false;
-                    stateMap.score = 0;
-                    return;
-                }
-                if (!_wasPlayerTurnValid) {
-                    //_wasPlayerTurnValid invalid either means user hit the wrong tone OR player turned the game off
-                    if (stateMap.isStrictMode || !stateMap.isGameOn) {
-                        stateMap.isGameStarted = false;
-                        stateMap.score = 0;
-                        return;
-                    } else {
-                        resetPlayScoreAndValidStateNonStrictMode();
-                        stateMap.whoseTurn = COMPUTERS_TURN; //player failed so computers turn
-                    }
-                }
-                stateMap.score++;
-                stateMap.playNumber++;
-                stateMap.userSequence = [];
-                stateMap.currentPlayerTone = -1;
-                if (stateMap.playNumber <= configMap.numberOfPlays) {
-                    playSequenceAndWaitForUser();
-                }
-            });
-        }
-        function resetPlayScoreAndValidStateNonStrictMode() {
-            stateMap.playNumber--;
-            stateMap.score--;
-            stateMap.userPlayValid = true; //user chose the wrong button but still valid in non-strict mode
-        }
-    }
-
     function toggleButtonStateAndColor(button) {
         //TODO: too much button complexity here - separate button module with clean API
         var isOnOffButton = button.id === 'onOffButton',
@@ -423,7 +432,6 @@ simon.game = (function () {
         var currentPlayerTone = stateMap.currentPlayerTone;
         return stateMap.userSequence[currentPlayerTone] === stateMap.gameSequenceOfTones[currentPlayerTone];
     }
-
 
     function wasPlayerTurnValid () {
         // wasPlayerTurnValid 
