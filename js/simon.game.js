@@ -5,11 +5,8 @@
 
 
 /*
-turning off the game should kill the sequence if being played
-restart should kill sequence being played
-add Map to anything that is a map
 add tests
-namespace the javascript and css - simon.game, simon.sound
+namespace css
 clean up css
 add win celebration if user makes it to 20
 add number of plays in game to url hash
@@ -23,6 +20,11 @@ simon.game = (function () {
         PLAYERS_TURN    = { who: 'player' },
         configMap = {
             numberOfPlays       : 20,
+
+            //buttonIdToNumberMap allows looking up the button number by button id
+            //buttons are numbered 0 - 4. 
+            //The button numbers correspond the the numbers in the 'sequence' which is the sequence of 20 tones the simon game will play in a game
+            //The sequence is an array of tone numbers from 0 - 4
             buttonIdToNumberMap         : {
                 'colorButton0': 0,
                 'colorButton1': 1,
@@ -36,13 +38,8 @@ simon.game = (function () {
         },
 
         // stateMap - current state of the game
-        //      whoseTurn       Is either COMPUTERS_TURN or PLAYERS_TURN. This will be COMPUTERS_TURN when:
-        //                          * Game started or restarted (playgame function)
-        //                          * User has successfully played all notes in the current sequence (handleGameButtonMouseUp function)
-        //                          * User played an incorrect note in the sequence in non strict mode (playGame function)
-        //                      
         stateMap = {
-            gameSequence                : [],
+            gameSequenceOfTones                : [],
             
             //isGameOn means the on/off button is on.
             //isGameOn is set in toggleButtonStateAndColor function (via call to setButtonStateAndColor)
@@ -50,7 +47,7 @@ simon.game = (function () {
 
             //isGameStarted means the game is on (on/off button is on) and the start button has been pressed (set in playGame function)
             //isGameStarted is set to false if
-            //  user hit the wrong note in strict mode or the game was turned off (set to false in playGame function)
+            //  user hit the wrong tone in strict mode or the game was turned off (set to false in playGame function)
             
             isGameStarted               : false,
             isStrictMode                : false,
@@ -59,6 +56,11 @@ simon.game = (function () {
             //score is incremented in playGame only
             score                       : 0,
             userSequence                : null,
+
+            // whoseTurn Is either COMPUTERS_TURN or PLAYERS_TURN. This will be COMPUTERS_TURN when:
+            //* Game started or restarted (playgame function)
+            //* User has successfully played all tones in the current sequence (handleGameButtonMouseUp function)
+            //* User played an incorrect tone in the sequence in non strict mode (playGame function)
             whoseTurn                   : null,
             userPlayValid               : true,
             currentPlayerTone           : null,
@@ -114,7 +116,7 @@ simon.game = (function () {
 
     function handleGameButtonMouseUp(e) {
         var button = e.button,
-            numberOfNotesForUserToPlay = stateMap.playNumber;
+            numberOfTonesForUserToPlay = stateMap.playNumber;
             
         if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
             return false;
@@ -128,7 +130,7 @@ simon.game = (function () {
         return false;
 
         function userPlayedSequenceSuccessfully() {
-            return stateMap.userPlayValid && stateMap.currentPlayerTone === numberOfNotesForUserToPlay;
+            return stateMap.userPlayValid && stateMap.currentPlayerTone === numberOfTonesForUserToPlay;
         }
     }
 
@@ -186,16 +188,16 @@ simon.game = (function () {
     function generateGameSequence() {
         var i;
         
-        stateMap.gameSequence = [];
+        stateMap.gameSequenceOfTones = [];
 
         for ( i = 1 ; i <= configMap.numberOfPlays; i++ ) {
-            stateMap.gameSequence.push(i % 4);
+            stateMap.gameSequenceOfTones.push(i % 4);
         }
 
         shuffleSequence();
 
         function shuffleSequence() {
-            stateMap.gameSequence.sort(function (a, b) {
+            stateMap.gameSequenceOfTones.sort(function (a, b) {
                 return 0.5 - Math.random();
             });
         }
@@ -247,16 +249,16 @@ simon.game = (function () {
                 });                
 
         function playTonesInSequence () {
-            //currentToneNoteNumber is a number from 0 to 3. This represents which of the 4 notes corresponding to the 4 color buttons to play for the current
+            //currentToneNumber is a number from 0 to 3. This represents which of the 4 tones corresponding to the 4 color buttons to play for the current
             // tone in the sequence
-            var currentToneNoteNumber = stateMap.gameSequence[currentTone],
+            var currentToneNumber = stateMap.gameSequenceOfTones[currentTone],
                 promise = 
-                    simon.buttons.setButtonColor(currentToneNoteNumber, true)
+                    simon.buttons.setButtonColor(currentToneNumber, true)
                     .then(function () {
-                        return simon.sound.play(stateMap.gameSequence[currentTone], 750);
+                        return simon.sound.play(stateMap.gameSequenceOfTones[currentTone], 750);
                     })
                     .then(function () {
-                        return simon.buttons.setButtonColor(currentToneNoteNumber, false)
+                        return simon.buttons.setButtonColor(currentToneNumber, false)
                     })
                     .then(function () {
                         //if currently playing tones in sequence and user hits start button, stateMap.playNumber will be set to 0
@@ -334,8 +336,8 @@ simon.game = (function () {
         //when game is first started, both isGameStarted and isGameRestarted are false after exection of this line (stateMap.isGameRestarted = stateMap.isGameStarted;)
         stateMap.isGameRestarted = stateMap.isGameStarted;
 
-        //now setting isGameStarted to true and will remain always true unless user hits a bad note in strict mode or turns off game
-        // assuming user doesn't hit bad note in strict mode and doesn't turn game off but DOES hit the start button, then isGameRestarted will be 
+        //now setting isGameStarted to true and will remain always true unless user hits a bad tone in strict mode or turns off game
+        // assuming user doesn't hit bad tone in strict mode and doesn't turn game off but DOES hit the start button, then isGameRestarted will be 
         // set to isGameStarted which is TRUE. This is the ONLY way isGameRestarted is set to true.
         // In this case, it is set to true only until the existing _wasPlayerTurnValid resolves
         stateMap.isGameStarted = true;
@@ -370,7 +372,7 @@ simon.game = (function () {
                     return;
                 }
                 if (!_wasPlayerTurnValid) {
-                    //_wasPlayerTurnValid invalid either means user hit the wrong note OR player turned the game off
+                    //_wasPlayerTurnValid invalid either means user hit the wrong tone OR player turned the game off
                     if (stateMap.isStrictMode || !stateMap.isGameOn) {
                         stateMap.isGameStarted = false;
                         stateMap.score = 0;
@@ -419,7 +421,7 @@ simon.game = (function () {
 
     function verifyUserPlay () {
         var currentPlayerTone = stateMap.currentPlayerTone;
-        return stateMap.userSequence[currentPlayerTone] === stateMap.gameSequence[currentPlayerTone];
+        return stateMap.userSequence[currentPlayerTone] === stateMap.gameSequenceOfTones[currentPlayerTone];
     }
 
 
@@ -432,7 +434,7 @@ simon.game = (function () {
             checkIfComputersTurnAndGameOn();
 
             function checkIfComputersTurnAndGameOn () {
-                //at this point in code, whoseTurn = COMPUTERS_TURN if and only if user played all notes correctly in the current sequence 
+                //at this point in code, whoseTurn = COMPUTERS_TURN if and only if user played all tones correctly in the current sequence 
                 // in this case, whoseTurn would have been set to computer in handleGameButtonMouseUp
                 if (stateMap.whoseTurn === COMPUTERS_TURN) {
                     resolve(_wasPlayerTurnValid = true);

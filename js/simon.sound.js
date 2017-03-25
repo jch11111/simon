@@ -9,8 +9,8 @@ simon.sound = (function () {
     //----------------------- BEGIN MODULE SCOPE VARIABLES -----------------------
     //  soundsMap - a map of all sounds. for color game buttons, the map key will be colorButton0, colorButton1, colorButton2, colorButton3
     //               for fail sound, the key will be fail
-    //  soundsArray - an array of all sounds. This array will allow fetching sound based on the numbers in the game sequence of notes. The
-    //                  game sequence of notes is an array of random integers from 0 - 3. These integers will be indexes into the soundsArray.
+    //  soundsArray - an array of all sounds. This array will allow fetching sound based on the numbers in the game sequence of tones. The
+    //                  game sequence of tones is an array of random integers from 0 - 3. These integers will be indexes into the soundsArray.
     var soundsMap = new Map(),
         soundsArray = [];    
 
@@ -54,8 +54,8 @@ simon.sound = (function () {
     // Purpose      : plays a sound
     // Parameters
     //      * mapKeyOrArrayIndex - may be the key for looking up the sound in soundsMap or may be an integer from 0 - 3, for looking up the sound in soundsArray
-    //      * durationMilliseconds - optional parameter - if passed, this is the duration of the note in milliseconds. If not passed, the note will be 
-    //          played in it's entirity (total length of the mp3's is 5 seconds) or until the note is paused
+    //      * durationMilliseconds - optional parameter - if passed, this is the duration of the tone in milliseconds. If not passed, the tone will be 
+    //          played in it's entirity (total length of the mp3's is 5 seconds) or until the tone is paused
     function play(mapKeyOrArrayIndex, durationMilliseconds) {
         var promise,
             sound = getSound(mapKeyOrArrayIndex);
