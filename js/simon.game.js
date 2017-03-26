@@ -75,7 +75,6 @@ simon.game = (function () {
             whoseTurn                   : null,
             userPlayValid               : true,
             currentPlayerTone           : null,
-            isGameRestarted             : false,
 
             //gameLoopActive is true if a game is currently being played in playGameLoop function
             //gameLoopActive is set to false only after all of the promises in playGameLoop function are resolved. 
@@ -286,13 +285,7 @@ simon.game = (function () {
     }
 
     function playGame() {
-        //when game is first started, both isGameStarted and isGameRestarted are false after exection of this line (stateMap.isGameRestarted = stateMap.isGameStarted;)
-        stateMap.isGameRestarted = stateMap.isGameStarted;
-
         //now setting isGameStarted to true and will remain always true unless user hits a bad tone in strict mode or turns off game
-        // assuming user doesn't hit bad tone in strict mode and doesn't turn game off but DOES hit the start button, then isGameRestarted will be 
-        // set to isGameStarted which is TRUE. This is the ONLY way isGameRestarted is set to true.
-        // In this case, it is set to true only until the existing _wasPlayerTurnValid resolves
         stateMap.isGameStarted = true;
 
         stateMap.userPlayValid = true;
@@ -360,13 +353,6 @@ simon.game = (function () {
                 return wasPlayerTurnValid()
             })
             .then(function (_wasPlayerTurnValid) {
-                /*
-                if (stateMap.isGameRestarted) {
-                    stateMap.isGameRestarted = false;
-                    stateMap.score = 0;
-                    return;
-                }
-                */
                 if (!_wasPlayerTurnValid) {
                     //_wasPlayerTurnValid invalid either means user hit the wrong tone OR player turned the game off
                     if (stateMap.isStrictMode || !stateMap.isGameOn) {
@@ -392,7 +378,6 @@ simon.game = (function () {
                     playGameLoop();
                 } else {
                     stateMap.gameLoopCount--;
-                    stateMap.isGameRestarted = false;
                     console.log('end of game loop - gameLoopCount = ', stateMap.gameLoopCount);
                 }
             });
