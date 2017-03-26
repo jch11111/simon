@@ -32,7 +32,9 @@ simon.game = (function () {
                 'colorButton1': 1,
                 'colorButton2': 2,
                 'colorButton3': 3,
-            }
+            },
+            // toneDuration is how long each tone is played in milliseconds
+            toneDurationMillisecond : 700
         },
         jqueryMap = {
             gameImage       : null,     //gameImage is the svg image of the game
@@ -73,7 +75,16 @@ simon.game = (function () {
             whoseTurn                   : null,
             userPlayValid               : true,
             currentPlayerTone           : null,
-            isGameRestarted             : false
+            isGameRestarted             : false,
+
+            //gameLoopActive is true if a game is currently being played in playGameLoop function
+            //gameLoopActive is set to false only after all of the promises in playGameLoop function are resolved. 
+            //See comments for playGameLoop function for description of the promises that must resolve
+            gameLoopActive              : false,
+
+            //each time playGameLoop is called, gameLoopCount is incremented. This value is used to ensure that all active game loops are finished before starting a new game
+            //prevents mutliple game loops from running at once.
+            gameLoopCount               : 0
         },
         startGameTimeoutId
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
@@ -173,6 +184,34 @@ simon.game = (function () {
         }, 500);
     }
     //----------------------- END EVENT HANDLERS -----------------------
+
+    // Begin private function / areExistingGameLoopsFinished /
+    // Purpose      : When the game is restarted, execution waits until existing game loop finishes (all promises resolve). This function determines that the current game loop
+    //                  if finished by checking the value of stateMap.gameLoopCount, which is:
+    //                      *** initially 0
+    //                      *** incremented at beginning of playGameLoop 
+    //                      *** decremented at the end of playGameLoop when all of playGameLoop promises have resolved
+    // Arguments    : none
+    // Returns      : A promise that resolves when stateMap.gameLoopCount <= 1
+    // Triggers     : none
+    // Throws       : none
+    function areExistingGameLoopsFinished () {
+        return new Promise (function (resolve, reject) {
+            checkIfExistingGameLoopsFinished();
+
+            function checkIfExistingGameLoopsFinished() {
+                console.log('stateMap.gameLoopCount', stateMap.gameLoopCount);
+                if (stateMap.gameLoopCount <= 1) {
+                    resolve();
+                } else {
+                    setTimeout(function () {
+                        checkIfExistingGameLoopsFinished();
+                    }, 1000);
+                }
+            }
+        });
+    }
+
     function flashButton (button) {
         var flashCount = 10,
             flashDuration = 200;
@@ -258,18 +297,19 @@ simon.game = (function () {
 
         stateMap.userPlayValid = true;
 
-        //statMap.playNumber = 0 because we are starting a game. Also, if user hits start in the midst of a game while an exiting sequence is being played,
-        // the fact that playNumber is reset to 0 will call the promise in playToneSequence in immediately resolve because the currentTone will suddenly be >
-        // than the play number. See playToneSequenceLoops function nested within playToneSequence function
-        stateMap.playNumber = 0;
-
         stateMap.userSequenceOfTones = [];
         generateGameSequence();
         stateMap.whoseTurn = COMPUTERS_TURN;
 
-        pause(400)
+        areExistingGameLoopsFinished()
+        .then(function () {
+            return pause(400);
+        })
         .then(function () {
             stateMap.currentPlayerTone = -1;
+            stateMap.playNumber = 0;
+            stateMap.score = 0;
+            stateMap.gameLoopCount++;
             playGameLoop();
         });
 
@@ -293,16 +333,25 @@ simon.game = (function () {
         //          * player turns off the game by pressing on off button
         //          * player hit an incorrect tone in the sequence and game is in strict mode (strict button is on)
         // Arguments    : none
-        // Returns      : 
+        // Returns      : Relies on promises but does not return a promise
         // Triggers     : none
         // Throws       : none
         // Promises     : 
-        //      Function relise on the following promises
-        //          * playToneSequence - function relying on the following promises:
+        //      playGameLoop relies on the following promises
+        //          * playToneSequence - relies on following promises:
         //              * pause                                                                     +++ reolves after 1 second pause
-        //              * playToneSequenceLoops - function relying on the following promises
-        //              
+        //              * playToneSequenceLoop - relies on following promises
+        //                  * simon.buttons.setButtonColor                                          +++ resolves immediately - synchronous function resolved with Promise.resolve
+        //                  * simon.sound.play                                                      +++ resolves after 700 milliseconds which is the duration of the tone 
+        //              and then playToneSequenceLoop                                              +++ *CONDITION* - resolves when  current tone is > the current play number OR game was 
+        //                                                                                              turned off OR game was restarted
+        //          * wasPlayerTurnValid                                                            +++ *CONDITION* resolves with value true when stateMap.whoseTurn === COMPUTERS_TURN (which would 
+        //                                                                                              happen if user played all notes correctly (handleGameButtonMouseUp) OR if game restarted
+        //                                                                                          +++ *CONDITION* resolves with value false if user played wrong tone or game turned off
+        //      when playToneSequence resolves, playGameLoop                                        +++ *CONDITION* resolves when playNumber = 20 (the configured number of turns in the game) OR
+        //                                                                                              if game was restarted
         function playGameLoop() {
+
             displayScore();  //synchronous
 
             playToneSequence()
@@ -311,13 +360,13 @@ simon.game = (function () {
                 return wasPlayerTurnValid()
             })
             .then(function (_wasPlayerTurnValid) {
-                console.log('stateMap.isGameRestarted', stateMap.isGameRestarted);
+                /*
                 if (stateMap.isGameRestarted) {
                     stateMap.isGameRestarted = false;
                     stateMap.score = 0;
-                    console.log('GAME RESTARTED!!!!!!!!');
                     return;
                 }
+                */
                 if (!_wasPlayerTurnValid) {
                     //_wasPlayerTurnValid invalid either means user hit the wrong tone OR player turned the game off
                     if (stateMap.isStrictMode || !stateMap.isGameOn) {
@@ -335,13 +384,16 @@ simon.game = (function () {
                     }
                 }
                 stateMap.score++;
-                console.log('score', stateMap.score);
                 stateMap.playNumber++;
                 stateMap.userSequenceOfTones = [];
                 stateMap.currentPlayerTone = -1;
-                if (stateMap.playNumber <= configMap.numberOfPlays) {
-                    console.log('recursively calling playGameLoop')
+                console.log('borrom of loop - stateMap.gameLoopCount = ', stateMap.gameLoopCount);
+                if (stateMap.playNumber < configMap.numberOfPlays && 1 === stateMap.gameLoopCount) {
                     playGameLoop();
+                } else {
+                    stateMap.gameLoopCount--;
+                    stateMap.isGameRestarted = false;
+                    console.log('end of game loop - gameLoopCount = ', stateMap.gameLoopCount);
                 }
             });
         }
@@ -354,17 +406,17 @@ simon.game = (function () {
 
         return pause(1000)
                .then(function () {
-                   return playToneSequenceLoops();
+                   return playToneSequenceLoop();
                 });                
 
-        function playToneSequenceLoops () {
+        function playToneSequenceLoop () {
             //currentToneNumber is a number from 0 to 3. This represents which of the 4 tones corresponding to the 4 color buttons to play for the current
             // tone in the sequence
             var currentToneNumber = stateMap.gameSequenceOfTones[currentTone],
                 promise = 
                     simon.buttons.setButtonColor(currentToneNumber, true)
                     .then(function () {
-                        return simon.sound.play(stateMap.gameSequenceOfTones[currentTone], 750);
+                        return simon.sound.play(stateMap.gameSequenceOfTones[currentTone], configMap.toneDurationMillisecond);
                     })
                     .then(function () {
                         return simon.buttons.setButtonColor(currentToneNumber, false)
@@ -373,11 +425,11 @@ simon.game = (function () {
                         //if currently playing tones in sequence and user hits start button, stateMap.playNumber will be set to 0
                         // meaning the next line will be false because currentTone will NOT be < 0 (stateMap.playNumber set to 0 when start button was hit)
                         // this is why the sequence stops when you hit the start button
-                        if (++currentTone <= stateMap.playNumber && stateMap.isGameOn) {
+                        if (++currentTone <= stateMap.playNumber && stateMap.isGameOn && 1 === stateMap.gameLoopCount) {
                             //console.log('NEXT TONE NEXT TONE currentTone++ = ', currentTone + 1, 'stateMap.playNumber', stateMap.playNumber);
                             return new Promise(function (resolve, reject) {
                                 setTimeout(function () {
-                                    playToneSequenceLoops().
+                                    playToneSequenceLoop().
                                     then(function () {
                                         resolve();    
                                     })
@@ -464,7 +516,7 @@ simon.game = (function () {
 
     function wasPlayerTurnValid () {
         // wasPlayerTurnValid 
-        // returns a promise that resolves when the user has finished his turn or after user turn has timed out
+        // returns a promise that resolves when the user has finished his turn. TODO - user turn should timeout
         var _wasPlayerTurnValid;
         return new Promise(function (resolve, reject) {
             
@@ -473,7 +525,7 @@ simon.game = (function () {
             function checkIfComputersTurnAndGameOn () {
                 //at this point in code, whoseTurn = COMPUTERS_TURN if and only if user played all tones correctly in the current sequence 
                 // in this case, whoseTurn would have been set to computer in handleGameButtonMouseUp
-                if (stateMap.whoseTurn === COMPUTERS_TURN) {
+                if (stateMap.whoseTurn === COMPUTERS_TURN || stateMap.gameLoopCount > 1) {
                     resolve(_wasPlayerTurnValid = true);
                 } else if (!stateMap.userPlayValid || !stateMap.isGameOn) {
                     //if player turned of the game, resolve _wasPlayerTurnValid = false, this will effectively stop the game play in function playGame
