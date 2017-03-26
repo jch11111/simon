@@ -307,7 +307,7 @@ simon.game = (function () {
         })
         .then(function () {
             stateMap.currentPlayerTone = -1;
-            stateMap.playNumber = 0;
+            stateMap.playNumber = -1;
             stateMap.score = 0;
             stateMap.gameLoopCount++;
             playGameLoop();
@@ -426,7 +426,7 @@ simon.game = (function () {
                         // meaning the next line will be false because currentTone will NOT be < 0 (stateMap.playNumber set to 0 when start button was hit)
                         // this is why the sequence stops when you hit the start button
                         if (++currentTone <= stateMap.playNumber && stateMap.isGameOn && 1 === stateMap.gameLoopCount) {
-                            //console.log('NEXT TONE NEXT TONE currentTone++ = ', currentTone + 1, 'stateMap.playNumber', stateMap.playNumber);
+                            console.log('NEXT TONE NEXT TONE currentTone++ = ', currentTone, 'stateMap.playNumber', stateMap.playNumber);
                             return new Promise(function (resolve, reject) {
                                 setTimeout(function () {
                                     playToneSequenceLoop().
