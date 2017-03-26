@@ -5,6 +5,8 @@
 
 
 /*
+when restarting game, need a way to force all promises within playGameLoop to resolve/reject as well as making sure 
+// playGameLoop doesn't call itself again (if (stateMap.playNumber <= configMap.numberOfPlays) {)
 add tests
 namespace css
 clean up css
@@ -39,7 +41,15 @@ simon.game = (function () {
 
         // stateMap - current state of the game
         stateMap = {
+
+            //gameSequenceOfTones is an array of 20 integers from 0 - 4 corrsponding to all the tones that will be played in the game
+            //The length of the array (20) is controlled by configMap.numberOfPlays
+            //userSequenceOfTones is compared to gameSequenceOfTones to determine if the user played all the notes correctly
+
             gameSequenceOfTones                : [],
+            //userSequenceOfTones is an array of integers from 0 - 4 corrsponding to the the tones the user played in her attempt to correctly play the current sequence
+            //userSequenceOfTones is compared to gameSequenceOfTones to determine if the user played all the notes correctly
+            userSequenceOfTones: [],
             
             //isGameOn means the on/off button is on.
             //isGameOn is set in toggleButtonStateAndColor function (via call to setButtonStateAndColor)
@@ -55,7 +65,6 @@ simon.game = (function () {
 
             //score is incremented in playGame only
             score                       : 0,
-            userSequence                : null,
 
             // whoseTurn Is either COMPUTERS_TURN or PLAYERS_TURN. This will be COMPUTERS_TURN when:
             //* Game started or restarted (playgame function)
@@ -65,7 +74,6 @@ simon.game = (function () {
             userPlayValid               : true,
             currentPlayerTone           : null,
             isGameRestarted             : false
-            //playSequencePromises        : []
         },
         startGameTimeoutId
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
@@ -100,7 +108,7 @@ simon.game = (function () {
         }
 
         if (stateMap.whoseTurn === PLAYERS_TURN) {
-            stateMap.userSequence.push(configMap.buttonIdToNumberMap[button.id]);
+            stateMap.userSequenceOfTones.push(configMap.buttonIdToNumberMap[button.id]);
             stateMap.currentPlayerTone++;
             if (!verifyUserPlay()) {
                 stateMap.userPlayValid = false;
@@ -251,27 +259,53 @@ simon.game = (function () {
         stateMap.userPlayValid = true;
 
         //statMap.playNumber = 0 because we are starting a game. Also, if user hits start in the midst of a game while an exiting sequence is being played,
-        // the fact that playNumber is reset to 0 will call the promise in playSequence in immediately resolve because the currentTone will suddenly be >
-        // than the play number. See playTonesInSequence function nested within playSequence function
+        // the fact that playNumber is reset to 0 will call the promise in playToneSequence in immediately resolve because the currentTone will suddenly be >
+        // than the play number. See playToneSequenceLoops function nested within playToneSequence function
         stateMap.playNumber = 0;
 
-        stateMap.userSequence = [];
+        stateMap.userSequenceOfTones = [];
         generateGameSequence();
         stateMap.whoseTurn = COMPUTERS_TURN;
-
-        //stateMap.playSequencePromises.forEach(function (promise) {
-        //    promise._reject('game restarted');
-        //})
 
         pause(400)
         .then(function () {
             stateMap.currentPlayerTone = -1;
-            playSequenceAndWaitForUser();
+            playGameLoop();
         });
 
-        function playSequenceAndWaitForUser() {
-            displayScore();
-            var playSequencePromises = playSequence()
+        // Begin private function / playGameLoop /
+        // Purpose : 
+        //      Controls the game play as follows:
+        //      The is a recursive (looping) function. Each loop (recursive call) does the following:
+        //          * displays the current score
+        //          * plays all the tones in the current tone sequence (game starts with a single tone. If user gets that right, game adds a second tone, and so on)
+        //          * waits for the player to finishe her attempt to play the current tone sequence
+        //          * if player played the current tone sequence correctly, then repeat this loop
+        //          * if user did not play the current tone sequence correctly, take the appropriate action based on game state
+        //          * at the end of the loop:
+        //              **increment the score
+        //              **increment play number
+        //              **reset userSequenceOfTones - the array of tones the user played for the current turn. This is reset to an empty array for each turn and repopulated as the user
+        //                  plays the tones for the turn
+        //              **sets currentPlayerTone to -1. currentPlayerTone keeps track of which tone in the sequence the user is playing as she attempts to play all the tones in the current tone sequence
+        //      The loop will continue until one of the following is true
+        //          * game is restarted by player hitting the start button - NOT WORKING NOT WORKING NOT WORKING NOT WORKING 
+        //          * player turns off the game by pressing on off button
+        //          * player hit an incorrect tone in the sequence and game is in strict mode (strict button is on)
+        // Arguments    : none
+        // Returns      : 
+        // Triggers     : none
+        // Throws       : none
+        // Promises     : 
+        //      Function relise on the following promises
+        //          * playToneSequence - function relying on the following promises:
+        //              * pause                                                                     +++ reolves after 1 second pause
+        //              * playToneSequenceLoops - function relying on the following promises
+        //              
+        function playGameLoop() {
+            displayScore();  //synchronous
+
+            playToneSequence()
             .then(function () {
                 stateMap.whoseTurn = PLAYERS_TURN;
                 return wasPlayerTurnValid()
@@ -287,43 +321,43 @@ simon.game = (function () {
                 if (!_wasPlayerTurnValid) {
                     //_wasPlayerTurnValid invalid either means user hit the wrong tone OR player turned the game off
                     if (stateMap.isStrictMode || !stateMap.isGameOn) {
+                        //restart the game if user played incorrect tone in strict mode, or the game was turned off
                         stateMap.isGameStarted = false;
                         stateMap.score = 0;
                         return;
                     } else {
-                        resetPlayScoreAndValidStateNonStrictMode();
-                        stateMap.whoseTurn = COMPUTERS_TURN; //player failed so computers turn
+                        //player played the wrong turn in non-strict mode, reset the play number and score, reset userPlayValid to true, and
+                        //set to computer's turn so the computer will replay the tone sequence so the user can try again
+                        stateMap.playNumber--;
+                        stateMap.score--;
+                        stateMap.userPlayValid = true;
+                        stateMap.whoseTurn = COMPUTERS_TURN;
                     }
                 }
                 stateMap.score++;
                 console.log('score', stateMap.score);
                 stateMap.playNumber++;
-                stateMap.userSequence = [];
+                stateMap.userSequenceOfTones = [];
                 stateMap.currentPlayerTone = -1;
                 if (stateMap.playNumber <= configMap.numberOfPlays) {
-                    playSequenceAndWaitForUser();
+                    console.log('recursively calling playGameLoop')
+                    playGameLoop();
                 }
             });
-            //stateMap.playSequencePromises.push(playSequencePromises);
-        }
-        function resetPlayScoreAndValidStateNonStrictMode() {
-            stateMap.playNumber--;
-            stateMap.score--;
-            stateMap.userPlayValid = true; //user chose the wrong button but still valid in non-strict mode
         }
     }
 
-    // playSequence
+    // playToneSequence
     // Plays the current sequence of tones 
-    function playSequence() {
+    function playToneSequence() {
         var currentTone = 0;
 
         return pause(1000)
                .then(function () {
-                   return playTonesInSequence();
+                   return playToneSequenceLoops();
                 });                
 
-        function playTonesInSequence () {
+        function playToneSequenceLoops () {
             //currentToneNumber is a number from 0 to 3. This represents which of the 4 tones corresponding to the 4 color buttons to play for the current
             // tone in the sequence
             var currentToneNumber = stateMap.gameSequenceOfTones[currentTone],
@@ -343,7 +377,7 @@ simon.game = (function () {
                             //console.log('NEXT TONE NEXT TONE currentTone++ = ', currentTone + 1, 'stateMap.playNumber', stateMap.playNumber);
                             return new Promise(function (resolve, reject) {
                                 setTimeout(function () {
-                                    playTonesInSequence().
+                                    playToneSequenceLoops().
                                     then(function () {
                                         resolve();    
                                     })
@@ -358,11 +392,6 @@ simon.game = (function () {
         }
     }
 
-    function setButtonColor (button, isButtonOn) {
-        simon.buttons.setButtonColor(button, isButtonOn);
-        return Promise.resolve();
-    }
-
     function setButtonStateAndColor (button, isButtonOn) {
         var stateMapProperty = button.id === 'strictButton' ? 'isStrictMode' 
             : button.id === 'onOffButton' ? 'isGameOn' : null;
@@ -371,7 +400,7 @@ simon.game = (function () {
             stateMap[stateMapProperty] = isButtonOn;
         }
 
-        setButtonColor(button, isButtonOn);
+        simon.buttons.setButtonColor(button, isButtonOn);
     }
 
     function setEventHandlers() {
@@ -430,7 +459,7 @@ simon.game = (function () {
 
     function verifyUserPlay () {
         var currentPlayerTone = stateMap.currentPlayerTone;
-        return stateMap.userSequence[currentPlayerTone] === stateMap.gameSequenceOfTones[currentPlayerTone];
+        return stateMap.userSequenceOfTones[currentPlayerTone] === stateMap.gameSequenceOfTones[currentPlayerTone];
     }
 
     function wasPlayerTurnValid () {
