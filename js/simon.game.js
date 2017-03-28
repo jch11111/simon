@@ -78,7 +78,9 @@ simon.game = (function () {
 
             //each time playGameLoop is called, gameLoopCount is incremented. This value is used to ensure that all active game loops are finished before starting a new game
             //prevents mutliple game loops from running at once.
-            gameLoopCount               : 0
+            gameLoopCount               : 0,
+
+            dontAllowStartBeforeTime    : new Date()
         },
         startGameTimeoutId
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
@@ -166,18 +168,37 @@ simon.game = (function () {
     }
 
     function handleStartButtonClick(startButton) {
+        //Don't allow restarting within 3 seconds to prevent race condition 
+        //which could result in stateMap.gameLoopCount being incremented almost 
+        //simulataneously by multiple 'threads' resulting in:
+        // (1) areExistingGameLoopsFinished never resolves because
+        // (2) stateMap.gameLoopCount is higher than the actual number of game loops - for example:
+        //      Good scenario 
+        //          - Player starts game 
+        //          - gameLoopCount = 1. 
+        //          - Player clicks start again. 
+        //          - gameLoopCount increments to 2
+        //          - since gameLoopCount > 1, all promises in existing loop are resolved and gameLoopCount is decremented back to 1 at end of existing loop
+        //      Bad scenario 
+        //          - Player starts game 
+        //          - gameLoopCount = 1. 
+        //          - Player clicks start mutlitple times quickly. 
+        //          - gameLoopCount increments to 3 or more
+        //          - areExistingGameLoopsFinished never resolves because there not actually 3 or more loops. All of the threads incremented  gameLoopCount
+        //          - and called areExistingGameLoopsFinished at about the same time
+        if (new Date() < stateMap.dontAllowStartBeforeTime) {
+            return;
+        } else {
+            stateMap.dontAllowStartBeforeTime = new Date(+(new Date()) + 2500);
+        }
         flashButton(startButton);
 
         stateMap.score = 0;
         displayScore();
 
-        //clearing then resetting a timeout to prevent multiple games from being fired off if the user clicks the start button repeatedly
-        if (startGameTimeoutId) {
-            clearTimeout(startGameTimeoutId);
-        }
-        startGameTimeoutId = setTimeout(function () {
-            playGame();
-        }, 700);
+
+        
+        playGame();
     }
     //----------------------- END EVENT HANDLERS -----------------------
 
@@ -193,6 +214,8 @@ simon.game = (function () {
     // Throws       : none
     function areExistingGameLoopsFinished () {
         return new Promise (function (resolve, reject) {
+            var startTime = new Date();
+
             checkIfExistingGameLoopsFinished();
 
             function checkIfExistingGameLoopsFinished() {
