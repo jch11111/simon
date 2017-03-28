@@ -76,11 +76,6 @@ simon.game = (function () {
             userPlayValid               : true,
             currentPlayerTone           : null,
 
-            //gameLoopActive is true if a game is currently being played in playGameLoop function
-            //gameLoopActive is set to false only after all of the promises in playGameLoop function are resolved. 
-            //See comments for playGameLoop function for description of the promises that must resolve
-            gameLoopActive              : false,
-
             //each time playGameLoop is called, gameLoopCount is incremented. This value is used to ensure that all active game loops are finished before starting a new game
             //prevents mutliple game loops from running at once.
             gameLoopCount               : 0
@@ -133,7 +128,6 @@ simon.game = (function () {
     }
 
     function handleGameButtonMouseUp(e) {
-        //console.log('stateMap.playNumber = ', stateMap.playNumber);
         var button = e.button,
             numberOfTonesForUserToPlay = stateMap.playNumber;
             
@@ -183,7 +177,7 @@ simon.game = (function () {
         }
         startGameTimeoutId = setTimeout(function () {
             playGame();
-        }, 500);
+        }, 700);
     }
     //----------------------- END EVENT HANDLERS -----------------------
 
@@ -206,9 +200,10 @@ simon.game = (function () {
                 if (stateMap.gameLoopCount <= 1) {
                     resolve();
                 } else {
+                    console.log('not yet gameLoopCount = ', stateMap.gameLoopCount);
                     setTimeout(function () {
                         checkIfExistingGameLoopsFinished();
-                    }, 1000);
+                    }, 200);
                 }
             }
         });
@@ -296,6 +291,8 @@ simon.game = (function () {
         generateGameSequence();
         stateMap.whoseTurn = COMPUTERS_TURN;
 
+        stateMap.gameLoopCount++;
+
         areExistingGameLoopsFinished()
         .then(function () {
             return pause(400);
@@ -304,7 +301,7 @@ simon.game = (function () {
             stateMap.currentPlayerTone = -1;
             stateMap.playNumber = 0;
             stateMap.score = 0;
-            stateMap.gameLoopCount++;
+
             playGameLoop();
         });
 
@@ -362,6 +359,7 @@ simon.game = (function () {
                         //restart the game if user played incorrect tone in strict mode, or the game was turned off
                         stateMap.isGameStarted = false;
                         stateMap.score = 0;
+                        stateMap.gameLoopCount = 0;
                         return;
                     } else {
                         //player played the wrong turn in non-strict mode, reset the play number and score, reset userPlayValid to true, and
@@ -381,7 +379,7 @@ simon.game = (function () {
                     playGameLoop();
                 } else {
                     stateMap.gameLoopCount--;
-                    //console.log('end of game loop - gameLoopCount = ', stateMap.gameLoopCount);
+                    console.log('end of game loop - gameLoopCount = ', stateMap.gameLoopCount);
                 }
             });
         }
@@ -390,35 +388,39 @@ simon.game = (function () {
     // playToneSequence
     // Plays the current sequence of tones 
     function playToneSequence() {
+        //currentTone is a number from 0 to 3. This represents which of the 4 tones corresponding to the 4 color buttons to play for the current
         var currentTone = 0;
 
         return pause(1000)
                .then(function () {
-                   return playToneSequenceLoop(currentTone);
+                   return playToneSequenceLoop();
                 });                
 
-        function playToneSequenceLoop(currentToneInSequence) {
-            //currentToneInSequence is a number from 0 to 3. This represents which of the 4 tones corresponding to the 4 color buttons to play for the current
+        function playToneSequenceLoop() {
+            //this removes the bleep sound
+            //if (stateMap.gameLoopCount > 1) {
+            //    return Promise.resolve();
+            //}
             // tone in the sequence
-            var currentToneNumber = stateMap.gameSequenceOfTones[currentToneInSequence],
+            var currentToneNumber = stateMap.gameSequenceOfTones[currentTone],
                 promise = 
                     simon.buttons.setButtonColor(currentToneNumber, true)
                     .then(function () {
-                        return simon.sound.play(stateMap.gameSequenceOfTones[currentToneInSequence], configMap.toneDurationMillisecond);
+                        return simon.sound.play(stateMap.gameSequenceOfTones[currentTone], configMap.toneDurationMillisecond);
                     })
                     .then(function () {
                         return simon.buttons.setButtonColor(currentToneNumber, false)
                     })
                     .then(function () {
-                        //if currently playing tones in sequence and user hits start button, stateMap.playNumber will be set to 0
-                        // meaning the next line will be false because currentToneInSequence will NOT be < 0 (stateMap.playNumber set to 0 when start button was hit)
+                        //if currently playing tones in sequence and user hits start button, stateMap.gameLoopCount will increment to 2
+                        // meaning the next line will be false.
                         // this is why the sequence stops when you hit the start button
-                        console.log('++currentToneInSequence', currentToneInSequence + 1, ', stateMap.playNumber = ', stateMap.playNumber);
+                        console.log('++currentTone', currentTone + 1, ', stateMap.playNumber = ', stateMap.playNumber, ', stateMap.gameLoopCount = ', stateMap.gameLoopCount);
                         if (++currentTone <= stateMap.playNumber && stateMap.isGameOn && 1 === stateMap.gameLoopCount) {
-                            console.log('NEXT TONE NEXT TONE currentToneInSequence++ = ', currentToneInSequence, 'stateMap.playNumber', stateMap.playNumber);
+                            //console.log('NEXT TONE NEXT TONE currentTone++ = ', currentTone, 'stateMap.playNumber', stateMap.playNumber);
                             return new Promise(function (resolve, reject) {
                                 setTimeout(function () {
-                                    playToneSequenceLoop(currentToneInSequence).
+                                    playToneSequenceLoop(currentTone).
                                     then(function () {
                                         resolve();    
                                     })
@@ -493,7 +495,7 @@ simon.game = (function () {
         if (isOnOffButton && isButtonGoingOff) {
             setButtonStateAndColor(simon.buttons.getButton('strictButton'), false);
             stateMap.score = '';
-            //stateMap.isGameStarted = false; not required since 
+            stateMap.gameLoopCount = 0;
             displayScore();
         }
     }
