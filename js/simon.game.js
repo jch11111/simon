@@ -111,11 +111,15 @@ simon.game = (function () {
 
     function handleGameButtonMouseDown(e) {
         var button = e.button;
-        if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN || !stateMap.userPlayValid) {
+        if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
             return false;
         }
 
-        //record and verify current player tone
+        if (!stateMap.userPlayValid) {
+            playFailSound();
+            return false;
+        }
+
         if (stateMap.whoseTurn === PLAYERS_TURN) {
             stateMap.userSequenceOfTones.push(configMap.buttonIdToNumberMap[button.id]);
             stateMap.currentPlayerToneNumber++;
