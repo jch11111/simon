@@ -5,8 +5,7 @@
 
 
 /*
-when restarting game, need a way to force all promises within playGameLoop to resolve/reject as well as making sure 
-// playGameLoop doesn't call itself again (if (stateMap.playNumber <= configMap.numberOfPlays) {)
+play all buttons at beginning for init sound mobile
 add tests
 namespace css
 clean up css
@@ -47,8 +46,8 @@ simon.game = (function () {
             //gameSequenceOfTones is an array of 20 integers from 0 - 4 corrsponding to all the tones that will be played in the game
             //The length of the array (20) is controlled by configMap.numberOfPlays
             //userSequenceOfTones is compared to gameSequenceOfTones to determine if the user played all the notes correctly
-
             gameSequenceOfTones                : [],
+
             //userSequenceOfTones is an array of integers from 0 - 4 corrsponding to the the tones the user played in her attempt to correctly play the current sequence
             //userSequenceOfTones is compared to gameSequenceOfTones to determine if the user played all the notes correctly
             userSequenceOfTones: [],
@@ -59,10 +58,15 @@ simon.game = (function () {
 
             //isGameStarted means the game is on (on/off button is on) and the start button has been pressed (set in playGame function)
             //isGameStarted is set to false if
-            //  user hit the wrong tone in strict mode or the game was turned off (set to false in playGame function)
-            
+            //player hit the wrong tone in strict mode or the game was turned off (set to false in playGame function)
             isGameStarted               : false,
+
+            //strict mode is enabled when the user presses the srtict button. If strict mode is on, then the game will end if the player makes an error (plays the an incorrect tone). The
+            // player will have to restart the game to continue playing.
+            // If strict mode is off, and the user plays an incorrect tone, the computer will REPLAY the current sequence of tones, and the player will get another chance.
             isStrictMode                : false,
+
+            //The current play number. When the game begins, playNumber is 0. The computer plays a single tone. If the user gets the tone right, and the playNumber is incremented.
             playNumber                  : null,
 
             //score is incremented in playGame only
@@ -73,20 +77,22 @@ simon.game = (function () {
             //* User has successfully played all tones in the current sequence (handleGameButtonMouseUp function)
             //* User played an incorrect tone in the sequence in non strict mode (playGame function)
             whoseTurn                   : null,
+
+            //userPlayValid is user played the correct sequece of tones
             userPlayValid               : true,
-            currentPlayerTone           : null,
+
+            //currentPlayerToneNumber keeps track of which tone in the sequence the user is playing as she attempts to play all the tones in the current tone sequence
+            currentPlayerToneNumber     : null,
 
             //each time playGameLoop is called, gameLoopCount is incremented. This value is used to ensure that all active game loops are finished before starting a new game
             //prevents mutliple game loops from running at once.
             gameLoopCount               : 0,
 
+            //dontAllowStartBeforeTime is used to prevent race conditions that can occur if user repeatedly clicks start button
             dontAllowStartBeforeTime    : new Date()
-        },
-        startGameTimeoutId
+        }
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
-    function displayScore () {
-        jqueryMap.scoreDisplay.text(stateMap.score);
-    }
+
 
     //----------------------- BEGIN EVENT HANDLERS -----------------------
     function handleButtonMouseOver (e) {
@@ -105,18 +111,14 @@ simon.game = (function () {
 
     function handleGameButtonMouseDown(e) {
         var button = e.button;
-        if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
+        if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN || !stateMap.userPlayValid) {
             return false;
         }
 
-        if (!stateMap.userPlayValid) {
-            playFailSound();
-            return;
-        }
-
+        //record and verify current player tone
         if (stateMap.whoseTurn === PLAYERS_TURN) {
             stateMap.userSequenceOfTones.push(configMap.buttonIdToNumberMap[button.id]);
-            stateMap.currentPlayerTone++;
+            stateMap.currentPlayerToneNumber++;
             if (!verifyUserPlay()) {
                 stateMap.userPlayValid = false;
                 playFailSound();
@@ -142,12 +144,11 @@ simon.game = (function () {
         if (userPlayedSequenceSuccessfully()) {
             stateMap.whoseTurn = COMPUTERS_TURN;
         } else {
-            //console.log('user fail!!!!!!! - stateMap.userPlayValid = ', stateMap.userPlayValid, ', stateMap.currentPlayerTone = ', stateMap.currentPlayerTone, ', numberOfTonesForUserToPlay = ', numberOfTonesForUserToPlay);
         }
         return false;
 
         function userPlayedSequenceSuccessfully() {
-            return stateMap.userPlayValid && stateMap.currentPlayerTone === numberOfTonesForUserToPlay;
+            return stateMap.userPlayValid && stateMap.currentPlayerToneNumber === numberOfTonesForUserToPlay;
         }
     }
 
@@ -232,6 +233,11 @@ simon.game = (function () {
         });
     }
 
+
+    function displayScore() {
+        jqueryMap.scoreDisplay.text(stateMap.score);
+    }
+
     function flashButton (button) {
         var flashCount = 10,
             flashDuration = 200;
@@ -308,6 +314,8 @@ simon.game = (function () {
     function playGame() {
         //now setting isGameStarted to true and will remain always true unless user hits a bad tone in strict mode or turns off game
         stateMap.isGameStarted = true;
+
+        //userPlayValid is true if player correctly played notes in the sequence
         stateMap.userPlayValid = true;
 
         stateMap.userSequenceOfTones = [];
@@ -321,7 +329,7 @@ simon.game = (function () {
             return pause(400);
         })
         .then(function () {
-            stateMap.currentPlayerTone = -1;
+            stateMap.currentPlayerToneNumber = -1;
             stateMap.playNumber = 0;
             stateMap.score = 0;
 
@@ -342,7 +350,7 @@ simon.game = (function () {
         //              **increment play number
         //              **reset userSequenceOfTones - the array of tones the user played for the current turn. This is reset to an empty array for each turn and repopulated as the user
         //                  plays the tones for the turn
-        //              **sets currentPlayerTone to -1. currentPlayerTone keeps track of which tone in the sequence the user is playing as she attempts to play all the tones in the current tone sequence
+        //              **sets currentPlayerToneNumber to -1. currentPlayerToneNumber keeps track of which tone in the sequence the user is playing as she attempts to play all the tones in the current tone sequence
         //      The loop will continue until one of the following is true
         //          * game is restarted by player hitting the start button - NOT WORKING NOT WORKING NOT WORKING NOT WORKING 
         //          * player turns off the game by pressing on off button
@@ -396,7 +404,7 @@ simon.game = (function () {
                 stateMap.score++;
                 stateMap.playNumber++;
                 stateMap.userSequenceOfTones = [];
-                stateMap.currentPlayerTone = -1;
+                stateMap.currentPlayerToneNumber = -1;
                 //console.log('borrom of loop - stateMap.gameLoopCount = ', stateMap.gameLoopCount);
                 if (stateMap.playNumber < configMap.numberOfPlays && 1 === stateMap.gameLoopCount) {
                     playGameLoop();
@@ -524,8 +532,8 @@ simon.game = (function () {
     }
 
     function verifyUserPlay () {
-        var currentPlayerTone = stateMap.currentPlayerTone;
-        return stateMap.userSequenceOfTones[currentPlayerTone] === stateMap.gameSequenceOfTones[currentPlayerTone];
+        var currentPlayerToneNumber = stateMap.currentPlayerToneNumber;
+        return stateMap.userSequenceOfTones[currentPlayerToneNumber] === stateMap.gameSequenceOfTones[currentPlayerToneNumber];
     }
 
     function wasPlayerTurnValid () {
