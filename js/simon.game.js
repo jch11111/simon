@@ -116,20 +116,27 @@ simon.game = (function () {
         }
 
         if (!stateMap.userPlayValid) {
+            //this code is executed if and only if game is in strict mode and user played an incorrect tone, and then, after playing an incorrect tone, player hit another button.
+            //this will result in all color tone buttons making the fail sound after user has played one incorrect note in strict mode
             playFailSound();
             return false;
         }
 
         if (stateMap.whoseTurn === PLAYERS_TURN) {
+            //if currently users turn, add the pressed button to userSequenceOfTones and verify whether the tone was correct
             stateMap.userSequenceOfTones.push(configMap.buttonIdToNumberMap[button.id]);
             stateMap.currentPlayerToneNumber++;
             if (!verifyUserPlay()) {
+                //if tone was NOT correct, set userPlayValid state to false, play the fail sound and exit
                 stateMap.userPlayValid = false;
                 playFailSound();
                 return false;
             }
         }
 
+        //if you've made it this far, the player is playing the correct note
+        //turn on the light for the button and begin playing the sound
+        //the light will stay on and the sound will play until the mouse up event
         simon.buttons.setButtonColor(button, true);
         simon.sound.play(button.id)
         return false;
@@ -142,12 +149,12 @@ simon.game = (function () {
         if (!stateMap.isGameOn || stateMap.whoseTurn === COMPUTERS_TURN) {
             return false;
         }
+        //make button dark and stop tone sound since the player has released the button
         simon.buttons.setButtonColor(button, false);
         simon.sound.pause(button.id);
 
         if (userPlayedSequenceSuccessfully()) {
             stateMap.whoseTurn = COMPUTERS_TURN;
-        } else {
         }
         return false;
 
@@ -156,6 +163,7 @@ simon.game = (function () {
         }
     }
 
+    //handleControlButtonClick handles click of on/off, start, and strict buttons
     function handleControlButtonClick (e) {
         var button = e.button;
         switch (button.id) {
@@ -166,6 +174,7 @@ simon.game = (function () {
                 handleStartButtonClick(button);
                 break;
             default:
+                //for on/off or strict mode, toggle the button color and button state via toggleButtonStateAndColor
                 toggleButtonStateAndColor(button);
                 break;
         }
@@ -173,7 +182,7 @@ simon.game = (function () {
     }
 
     function handleStartButtonClick(startButton) {
-        //Don't allow restarting within 3 seconds to prevent race condition 
+        //Don't allow restarting within 2.5 seconds to prevent race condition 
         //which could result in stateMap.gameLoopCount being incremented almost 
         //simulataneously by multiple 'threads' resulting in:
         // (1) areExistingGameLoopsFinished never resolves because
@@ -196,13 +205,12 @@ simon.game = (function () {
         } else {
             stateMap.dontAllowStartBeforeTime = new Date(+(new Date()) + 2500);
         }
+        //flashButton flashes the start button on and off to indicate game is starting or restarting
         flashButton(startButton);
 
+        //set score to 0 and display, then start the game
         stateMap.score = 0;
         displayScore();
-
-
-        
         playGame();
     }
     //----------------------- END EVENT HANDLERS -----------------------
@@ -228,7 +236,6 @@ simon.game = (function () {
                 if (stateMap.gameLoopCount <= 1) {
                     resolve();
                 } else {
-                    console.log('not yet gameLoopCount = ', stateMap.gameLoopCount);
                     setTimeout(function () {
                         checkIfExistingGameLoopsFinished();
                     }, 200);
@@ -236,7 +243,6 @@ simon.game = (function () {
             }
         });
     }
-
 
     function displayScore() {
         jqueryMap.scoreDisplay.text(stateMap.score);
@@ -262,16 +268,21 @@ simon.game = (function () {
         }
     }
 
+    //generateGameSequence generates a game sequence which is an array of random integers between 0 and 3
+    //these will be the tones that the game will play
+    //when the game first starts, the computer will play the tone represented by the number in position 0 in the array
+    //if the user gets this correct, then the computer will play 2 tones represented by the numbers in position 0 and 1 in the array, and so on.
     function generateGameSequence() {
         var i;
         
         stateMap.gameSequenceOfTones = [];
 
         for ( i = 1 ; i <= configMap.numberOfPlays; i++ ) {
-            stateMap.gameSequenceOfTones.push(i % 4);
+            stateMap.gameSequenceOfTones.push(Math.floor(Math.random() * 4));
         }
 
         shuffleSequence();
+        console.log(stateMap.gameSequenceOfTones);
 
         function shuffleSequence() {
             stateMap.gameSequenceOfTones.sort(function (a, b) {
@@ -280,6 +291,7 @@ simon.game = (function () {
         }
     }
 
+    //init is the only public api for this module
     function init() {
         $(window).load(function () {
             initializeJqueryMap();
@@ -514,6 +526,7 @@ simon.game = (function () {
         });
     }
 
+    //toggleButtonStateAndColor toggles the color and state for on/off and strict buttons only
     function toggleButtonStateAndColor(button) {
         //TODO: too much button complexity here - separate button module with clean API
         var isOnOffButton = button.id === 'onOffButton',
