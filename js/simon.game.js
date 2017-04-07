@@ -307,6 +307,7 @@ simon.game = (function () {
         jqueryMap.scoreDisplay = $(gameImage).find('#scoreDisplay');
     }
     
+    //returns a promise that resolves after millisecondsToPause
     function pause (millisecondsToPause) {
         return new Promise (function (resolve, reject) {
             var begin = new Date();
@@ -334,10 +335,13 @@ simon.game = (function () {
         //userPlayValid is true if player correctly played notes in the sequence
         stateMap.userPlayValid = true;
 
+        //userSequenceOfTones will contain the tones the user plays as she tries to correcly play the sequence
         stateMap.userSequenceOfTones = [];
+        //generate the 20 random tones that will be the sequence for this game
         generateGameSequence();
         stateMap.whoseTurn = COMPUTERS_TURN;
 
+        //gameLoopCount prevents mutliple game loops from happening at the same time if the player hits start button repeatedly
         stateMap.gameLoopCount++;
 
         areExistingGameLoopsFinished()
@@ -345,7 +349,9 @@ simon.game = (function () {
             return pause(400);
         })
         .then(function () {
+            //currentPlayerToneNumber is a counter that keeps track of the tones player plays during each turn
             stateMap.currentPlayerToneNumber = -1;
+            //playNumber is a counter that tracks the current play. There are 20 tones in the sequence, and, unless the user fails, there will be 20 plays in the game
             stateMap.playNumber = 0;
             stateMap.score = 0;
 
