@@ -88,7 +88,9 @@ simon.game = (function () {
             gameLoopCount               : 0,
 
             //dontAllowStartBeforeTime is used to prevent race conditions that can occur if user repeatedly clicks start button
-            dontAllowStartBeforeTime    : new Date()
+            dontAllowStartBeforeTime    : new Date(),
+
+            hasInitializedSounds        : false
         }
     //----------------------- END MODULE SCOPE VARIABLES -----------------------
 
@@ -317,6 +319,10 @@ simon.game = (function () {
     }
 
     function playAllTonesFast (numberOfTones) {
+        if (stateMap.hasInitializedSounds) {
+            return;
+        }
+        stateMap.hasInitializedSounds = true;
         var toneNumber = -1;
         return playWinLoop();
 
