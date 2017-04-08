@@ -18,11 +18,6 @@ html, body {
   font-size: 16px;
 }
 
-#message {
-    color: #000;
-    margin-top: 20px;
-}
-
 .signature {
     font-size: 14px;
     color: #BBB;
@@ -35,23 +30,10 @@ html, body {
     width: 60%;
 }
 
-.timerSettings {
-    height: 50px;
-}
-
 @media screen and (max-width: 383px) {
     h5 {
         font-size: 32px;
     }  
-}
-
-.color2 {
-    fill: #00f5ff;
-    stroke: #00f5ff;
-}
-
-#colorButton1:hover {
-    cursor: pointer;
 }
 
 @media screen and (max-width: 420px) {
@@ -61,12 +43,4 @@ html, body {
     #pageContent {
         padding: 0;
     }
-}
-
-.hidden {
-    display : none;
-}
-
-.visible {
-    display : normal;
 }
