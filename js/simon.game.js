@@ -19,7 +19,7 @@ simon.game = (function () {
         COMPUTERS_TURN  = { who: 'computer'},
         PLAYERS_TURN    = { who: 'player' },
         configMap = {
-            numberOfPlays       : 20,
+            numberOfPlays       : null,   //set in init method
 
             //buttonIdToNumberMap allows looking up the button number by button id
             //buttons are numbered 0 - 4. 
@@ -32,7 +32,7 @@ simon.game = (function () {
                 'colorButton3': 3,
             },
             // toneDuration is how long each tone is played in milliseconds
-            toneDurationMillisecond : 700
+            toneDurationMilliseconds: 700
         },
         jqueryMap = {
             gameImage       : null,     //gameImage is the svg image of the game
@@ -43,7 +43,7 @@ simon.game = (function () {
         stateMap = {
 
             //gameSequenceOfTones is an array of 20 integers from 0 - 4 corrsponding to all the tones that will be played in the game
-            //The length of the array (20) is controlled by configMap.numberOfPlays
+            //The length of the array (20) is controlled by configMap.numberOfPlays. numberOfPlays variable is set in init function
             //userSequenceOfTones is compared to gameSequenceOfTones to determine if the user played all the notes correctly
             gameSequenceOfTones                : [],
 
@@ -316,8 +316,30 @@ simon.game = (function () {
         });
     }
 
-    function playFailSound () {
-        simon.sound.play('fail', 500);
+    function playAllTonesFast (numberOfTones) {
+        var toneNumber = -1;
+        return playWinLoop();
+
+        function playWinLoop() {
+            return playToneAndLightButton(++toneNumber % 4, 100)
+                .then(function () {
+                    if (toneNumber <= numberOfTones) {
+                        return new Promise(function (resolve, reject) {
+                            playWinLoop()
+                            .then(function () {
+                                resolve();
+                            });
+                        });
+                    } else {
+                        playFailSound(20);
+                        return Promise.resolve();
+                    }
+                });
+        }
+    }
+
+    function playFailSound (durationMilliseconds) {
+        simon.sound.play('fail', durationMilliseconds || 500);
     }
 
     function playGame() {
@@ -339,6 +361,9 @@ simon.game = (function () {
         areExistingGameLoopsFinished()
         .then(function () {
             return pause(400);
+        })
+        .then(function () {
+            playAllTonesFast(3);
         })
         .then(function () {
             //currentPlayerToneNumber is a counter that keeps track of the tones player plays during each turn
@@ -421,6 +446,9 @@ simon.game = (function () {
                 if (stateMap.playNumber < configMap.numberOfPlays && 1 === stateMap.gameLoopCount) {
                     //there are more plays in this game (or user has restarted the game which would result in stateMap.gameLoopCount > 1
                     playGameLoop();
+                } else if (stateMap.playNumber === configMap.numberOfPlays) {
+                    //end of game - play a celebration
+                    playWinCelebration();
                 } else {
                     stateMap.gameLoopCount--;
                 }
@@ -428,11 +456,23 @@ simon.game = (function () {
         }
     }
 
+    //play a single tone, and light the button while playing
+    //toneNumber is a number from 0 to 3. This represents which of the 4 tones corresponding to the 4 color buttons to play
+    function playToneAndLightButton(toneNumber, toneDurationMilliseconds) {
+        return simon.buttons.setButtonColor(toneNumber, true)
+            .then(function () {
+                return simon.sound.play(toneNumber, toneDurationMilliseconds);
+            })
+            .then(function () {
+                return simon.buttons.setButtonColor(toneNumber, false)
+            })
+    }
+
     // playToneSequence
     // Plays the current sequence of tones 
     function playToneSequence() {
-        //currentTone is a number from 0 to 3. This represents which of the 4 tones corresponding to the 4 color buttons to play for the current
-        var currentTone = 0;
+        //currentPositionSequence is number from 0 to 20 indicatiing which tone in the sequence of 20 tones is being played
+        var currentPositionSequence = 0;
 
         return pause(1000)
                .then(function () {
@@ -441,23 +481,18 @@ simon.game = (function () {
 
         //playToneSequenceLoop recursively calls itself until all the tones in the current sequence are played
         function playToneSequenceLoop() {
-            var currentToneNumber = stateMap.gameSequenceOfTones[currentTone],
+            //currentToneNumber is a number from 0 to 3. This represents which of the 4 tones corresponding to the 4 color buttons to play for the current
+            var currentToneNumber = stateMap.gameSequenceOfTones[currentPositionSequence],
                 promise = 
-                    simon.buttons.setButtonColor(currentToneNumber, true)
-                    .then(function () {
-                        return simon.sound.play(stateMap.gameSequenceOfTones[currentTone], configMap.toneDurationMillisecond);
-                    })
-                    .then(function () {
-                        return simon.buttons.setButtonColor(currentToneNumber, false)
-                    })
+                    playToneAndLightButton(currentToneNumber, configMap.toneDurationMilliseconds)
                     .then(function () {
                         //if currently playing tones in sequence and user hits start button, stateMap.gameLoopCount will increment to 2
                         // meaning the next line will be false.
                         // this is why the sequence stops when you hit the start button
-                        if (++currentTone <= stateMap.playNumber && stateMap.isGameOn && 1 === stateMap.gameLoopCount) {
+                        if (++currentPositionSequence <= stateMap.playNumber && stateMap.isGameOn && 1 === stateMap.gameLoopCount) {
                             return new Promise(function (resolve, reject) {
                                 setTimeout(function () {
-                                    playToneSequenceLoop(currentTone).
+                                    playToneSequenceLoop(currentPositionSequence).
                                     then(function () {
                                         resolve();    
                                     })
@@ -470,6 +505,20 @@ simon.game = (function () {
 
             return promise;
         }
+    }
+
+    //player finished the game so play celebration
+    function playWinCelebration () {
+        displayScore(stateMap.score = ':)');  //display smily score
+        stateMap.gameLoopCount = 0;
+
+        playAllTonesFast(24)
+        .then(function () {
+            playToneAndLightButton(0, 2000);
+            playToneAndLightButton(1, 2000);
+            playToneAndLightButton(2, 2000);
+            playToneAndLightButton(3, 2000);
+        });
     }
 
     //set the color of the a button and the state associated with the button
@@ -575,6 +624,8 @@ simon.game = (function () {
             simon.sound.init();
             simon.buttons.init(jqueryMap.gameImage);
             setEventHandlers();
+            configMap.numberOfPlays = location.hash === '#short' ? 5 : 20;  //#short hash in url for short game
+            location.hash !== '#easy'
         })
     };
     //----------------------- END PUBLIC FUNCTIONS -----------------------

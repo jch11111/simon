@@ -149,6 +149,9 @@ simon.buttons = (function () {
             //buttonOrButtonNumber is the actual buttons
             button = buttonOrButtonNumber;
         }
+        if (!button) {
+            console.log(button);
+        }
         buttonColor = buttonColors[button.id][(isLit ? 'light' : 'dark')];
         $(button).css('fill', buttonColor);
 
