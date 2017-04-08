@@ -651,7 +651,7 @@ simon.game = (function () {
             simon.sound.init();
             simon.buttons.init(jqueryMap.gameImage);
             setEventHandlers();
-            configMap.numberOfPlays = location.hash === '#short' ? 2 : 20;  //#short hash in url for short game
+            configMap.numberOfPlays = location.hash === '#short' ? 5 : 20;  //#short hash in url for short game
             location.hash !== '#easy'
         })
     };
