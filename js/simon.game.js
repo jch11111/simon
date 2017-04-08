@@ -512,7 +512,34 @@ simon.game = (function () {
         displayScore(stateMap.score = ':)');  //display smily score
         stateMap.gameLoopCount = 0;
 
-        playAllTonesFast(24)
+        Promise.all([
+            playToneAndLightButton(3, 700),
+            playToneAndLightButton(0, 700)])
+        .then(function () {
+            return Promise.all([
+                playToneAndLightButton(1, 700),
+                playToneAndLightButton(2, 700)])
+        })
+        .then(function () {
+            return Promise.all([
+                playToneAndLightButton(2, 700),
+                playToneAndLightButton(3, 700)])
+        })
+        .then(function () {
+            return Promise.all([
+                playToneAndLightButton(0, 700),
+                playToneAndLightButton(1, 700)])
+        })
+        .then(function () {
+            return Promise.all([
+                playToneAndLightButton(1, 700),
+                playToneAndLightButton(3, 700)])
+        })
+        .then(function () {
+            return Promise.all([
+                playToneAndLightButton(2, 700),
+                playToneAndLightButton(0, 700)])
+        })
         .then(function () {
             playToneAndLightButton(0, 2000);
             playToneAndLightButton(1, 2000);
@@ -624,7 +651,7 @@ simon.game = (function () {
             simon.sound.init();
             simon.buttons.init(jqueryMap.gameImage);
             setEventHandlers();
-            configMap.numberOfPlays = location.hash === '#short' ? 5 : 20;  //#short hash in url for short game
+            configMap.numberOfPlays = location.hash === '#short' ? 2 : 20;  //#short hash in url for short game
             location.hash !== '#easy'
         })
     };
