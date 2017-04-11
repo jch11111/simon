@@ -318,6 +318,7 @@ simon.game = (function () {
         });
     }
 
+    //playAllTonesFast simply plays all of the tones quickly. This is used to initialize the sounds. On mobile, tones will sometimes not play until second time.
     function playAllTonesFast (numberOfTones) {
         if (stateMap.hasInitializedSounds) {
             return;
