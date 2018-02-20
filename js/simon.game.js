@@ -10,7 +10,6 @@ namespace css
 clean up css
 add win celebration if user makes it to 20
 add number of plays in game to url hash
-x
 */
 simon.game = (function () {
     "use strict";
